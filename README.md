@@ -45,3 +45,20 @@ docs: http://127.0.0.1:8000/docs
 | `GET /claims/{id}/check` | Policy violations with citations, per-line USD amounts, per diem and total |
 
 Money is always a JSON string such as `"12.50"`, in requests and responses.
+
+<!-- api-docs:claims:start -->
+## Claims API reference
+
+Submit expense claims and check them against the currency, receipts, meals, lodging and per diem
+policies. Four endpoints: `POST /claims`, `GET /claims?employee_id=…`, `GET /claims/{claim_id}` and
+`GET /claims/{claim_id}/check`. No auth. Money is always a JSON string such as `"12.50"`; checked
+amounts are in USD.
+
+Run it locally (then open http://127.0.0.1:8000/docs):
+
+```bash
+CLAIMS_DB_PATH=data/claims.db uv run uvicorn agentic_app.app:app_from_env --factory
+```
+
+Full reference: [docs/api/claims.md](docs/api/claims.md) (from [docs/api/openapi.json](docs/api/openapi.json)).
+<!-- api-docs:claims:end -->
