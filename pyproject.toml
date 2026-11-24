@@ -25,6 +25,7 @@ dev = [
     "mutmut>=3.8.1",
     "pytest>=9.2.0",
     "pytest-cov>=7.1.0",
+    "ruff>=0.17.6",
 ]
 
 [tool.pytest.ini_options]
@@ -41,9 +42,23 @@ branch = true
 
 [tool.coverage.report]
 show_missing = true
+# 90%: current total is 93%. A 3-point margin lets a refactor move a few lines without failing,
+# but a module losing its tests (e.g. rules.py at 100% with ~120 statements) drops the total
+# below 90 and fails the build. Raise it as coverage grows; never lower it to make a PR pass.
+fail_under = 90
 
 [tool.mutmut]
 paths_to_mutate = ["src/agentic_app/"]
 do_not_mutate = ["*/llm.py", "*/__init__.py"]
 also_copy = ["data/"]
 pytest_add_cli_args = ["--ignore=tests/claims/test_rules_purity.py", "--ignore=tests/test_package_import.py", "--ignore=tests/claims/test_app.py"]
+
+[tool.ruff]
+line-length = 100
+extend-exclude = [".specify"]
+
+[tool.ruff.lint]
+# Correctness only: syntax/style errors (E) and real bugs like unused imports or undefined names (F).
+# Line length (E501) is left to a later formatter decision, so it doesn't gate.
+select = ["E", "F"]
+ignore = ["E501"]
