@@ -76,7 +76,7 @@ specs/001-claims-api/
 src/agentic_app/
 ├── __init__.py          # existing CLI; llm import moved inside main() (R-12)
 ├── llm.py               # existing Gemini wrapper (unchanged, not imported by this feature)
-├── schemas.py           # Pydantic models: Trip, ExpenseLine, ClaimIn, Claim, Citation,
+├── schemas.py           # Pydantic models: Trip, ExpenseLine, ClaimIn, Claim, RuleId, Citation,
 │                        #   Violation, LineResult, PerDiem, CheckResult
 ├── app.py               # create_app(db_path, policy_dir); app_from_env() factory for
 │                        #   `uvicorn --factory`; no app built at import time (R-12)
@@ -84,7 +84,7 @@ src/agentic_app/
     ├── __init__.py
     ├── money.py         # to_cents(): Decimal quantize to 0.01, ROUND_HALF_UP
     ├── policy.py        # load_policy(dir) -> Policy (frozen); PolicyError
-    ├── rules.py         # RuleId enum + check_claim() (pure)
+    ├── rules.py         # check_claim() (pure); re-exports RuleId from schemas.py
     ├── store.py         # sqlite3: init_db, add_claim, get_claim, list_claims, prior_lines
     ├── api.py           # APIRouter: POST /claims, GET /claims, GET /claims/{id}, GET /claims/{id}/check
     └── seed.py          # python -m agentic_app.claims.seed --db PATH  (empty DB only)

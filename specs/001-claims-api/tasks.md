@@ -249,3 +249,8 @@ Task: "Check endpoint tests in tests/claims/test_api_check.py"
 - [X] T044 Type data-model.md `Violation.rule_id` as the five rule IDs instead of a free `str` in src/agentic_app/schemas.py (e.g. move `RuleId` into schemas.py and re-export it from rules.py) so the OpenAPI schema lists the allowed values per data-model.md Violation.rule_id (partial)
 - [X] T045 Review the `--seed` option in src/agentic_app/claims/seed.py, which contracts/claims-api.md's CLI contract does not mention: either document it in the contract and quickstart.md or remove it per contracts/claims-api.md CLI contract (unrequested)
 
+---
+
+## Phase 8: Convergence
+
+- [X] T046 Update specs/001-claims-api/plan.md (file tree: `rules.py # RuleId enum + check_claim()`) and specs/001-claims-api/data-model.md (`Violation.rule_id`: "defined once in `claims/rules.py`") to say `RuleId` is defined in src/agentic_app/schemas.py and re-exported from rules.py, matching T044 per plan: project structure and data-model.md Violation.rule_id (partial)

@@ -60,7 +60,7 @@ earlier claims, passed to `check_claim` for duplicate detection (R-11).
 
 | Field | Type | Notes |
 |---|---|---|
-| `rule_id` | enum `RuleId` | `CURRENCY_UNSUPPORTED`, `RECEIPT_MISSING`, `DUPLICATE`, `MEALS_DAILY_LIMIT`, `LODGING_NIGHTLY_CAP` — defined once in `claims/rules.py` |
+| `rule_id` | enum `RuleId` | `CURRENCY_UNSUPPORTED`, `RECEIPT_MISSING`, `DUPLICATE`, `MEALS_DAILY_LIMIT`, `LODGING_NIGHTLY_CAP` — defined once in `schemas.py`, re-exported from `claims/rules.py` |
 | `line_nos` | list[int] | affected lines, ascending |
 | `date` | date \| null | the day (meals) or night (lodging); null for per-line rules |
 | `excess_usd` | Decimal \| null | amount rejected by this violation for `MEALS_DAILY_LIMIT` and `LODGING_NIGHTLY_CAP`; null for the other rules |
