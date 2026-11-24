@@ -116,3 +116,16 @@ def test_numeric_literal_scan_catches_hidden_numbers():
     # Guard for the scan itself, so a broken scanner cannot pass silently.
     tree = ast.parse('x = 75\ny = Decimal("25.00")\nz = Decimal("0.00") + 1')
     assert numeric_literals(tree) == [(1, "75"), (2, 'Decimal("25.00")')]
+
+
+def test_shared_rule_state_cannot_be_changed():
+    # Constitution III / contracts/claims-api.md: no module-level mutable state in the engine.
+    import dataclasses
+
+    from agentic_app.claims import rules
+
+    assert isinstance(rules._RULE_ORDER, tuple)
+    for citation in [*rules.RULE_CITATIONS.values(), *rules.PER_DIEM_CITATIONS.values()]:
+        assert isinstance(citation.sections, tuple)
+        with pytest.raises(dataclasses.FrozenInstanceError):
+            citation.doc_id = "POL-CHANGED"  # type: ignore[misc]

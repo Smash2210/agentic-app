@@ -108,5 +108,11 @@ load_policy(policy_dir: Path) -> Policy      # raises PolicyError naming file + 
 ## CLI contract: seed loader
 
 ```text
-uv run python -m agentic_app.claims.seed --db PATH   # exit 0, prints "Loaded 12 claims"; exit 1 if DB not empty
+uv run python -m agentic_app.claims.seed --db PATH [--seed FILE]
 ```
+
+- `--db PATH` (required): SQLite file; created if missing.
+- `--seed FILE` (optional, default `data/seed/claims.json`, relative to the working directory): the
+  seed JSON to load. Each entry is a `POST /claims` body plus `expected_*` keys, which are ignored.
+- Exit 0 and print `Loaded N claims` (12 for the default seed); exit 1 with a message on stderr if
+  the database already has claims.

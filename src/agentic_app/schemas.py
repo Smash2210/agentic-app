@@ -159,13 +159,23 @@ class PriorLine(BaseModel):
 # --- check result -------------------------------------------------------------------------------
 
 
+class RuleId(StrEnum):
+    """Violation rule IDs, in the order violations are reported (research R-09)."""
+
+    CURRENCY_UNSUPPORTED = "CURRENCY_UNSUPPORTED"
+    RECEIPT_MISSING = "RECEIPT_MISSING"
+    DUPLICATE = "DUPLICATE"
+    MEALS_DAILY_LIMIT = "MEALS_DAILY_LIMIT"
+    LODGING_NIGHTLY_CAP = "LODGING_NIGHTLY_CAP"
+
+
 class Citation(BaseModel):
     doc_id: str
     sections: list[str]
 
 
 class Violation(BaseModel):
-    rule_id: str
+    rule_id: RuleId
     line_nos: list[int]
     date: date | None
     excess_usd: Decimal | None

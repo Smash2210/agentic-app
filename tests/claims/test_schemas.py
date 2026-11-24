@@ -191,3 +191,27 @@ def test_end_before_start_reported_with_line_errors():
     locs = error_locs(with_change(change))
     assert ("trip", "end_date") in locs
     assert ("lines", 3, "date") in locs
+
+
+# --- Violation.rule_id is one of the five rule IDs (data-model.md Violation.rule_id) ------------
+
+
+def test_violation_rule_id_must_be_a_known_rule():
+    from agentic_app.schemas import Citation, Violation
+
+    fields = {"line_nos": [1], "date": None, "excess_usd": None, "message": "m",
+              "citation": Citation(doc_id="POL-RECEIPTS", sections=["3", "4"])}
+    assert Violation(rule_id="DUPLICATE", **fields).rule_id == "DUPLICATE"
+    with pytest.raises(ValidationError):
+        Violation(rule_id="NOT_A_RULE", **fields)
+
+
+def test_openapi_lists_the_rule_ids():
+    from agentic_app.schemas import Violation
+
+    schema = Violation.model_json_schema()
+    rule_id = schema["$defs"]["RuleId"]
+    assert rule_id["enum"] == [
+        "CURRENCY_UNSUPPORTED", "RECEIPT_MISSING", "DUPLICATE",
+        "MEALS_DAILY_LIMIT", "LODGING_NIGHTLY_CAP",
+    ]

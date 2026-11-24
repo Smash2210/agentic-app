@@ -9,7 +9,6 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import date, timedelta
 from decimal import Decimal
-from enum import StrEnum
 from types import MappingProxyType
 
 from agentic_app.claims.money import to_cents
@@ -23,34 +22,36 @@ from agentic_app.schemas import (
     LineResult,
     PerDiem,
     PriorLine,
+    RuleId,  # re-exported: defined with the Violation model it types
     Violation,
 )
 
 
-class RuleId(StrEnum):
-    """Violation rule IDs, in the order violations are reported (research R-09)."""
+@dataclass(frozen=True)
+class PolicyRef:
+    """An immutable doc_id + sections pair; a fresh Citation is built from it for each result."""
 
-    CURRENCY_UNSUPPORTED = "CURRENCY_UNSUPPORTED"
-    RECEIPT_MISSING = "RECEIPT_MISSING"
-    DUPLICATE = "DUPLICATE"
-    MEALS_DAILY_LIMIT = "MEALS_DAILY_LIMIT"
-    LODGING_NIGHTLY_CAP = "LODGING_NIGHTLY_CAP"
+    doc_id: str
+    sections: tuple[str, ...]
+
+    def citation(self) -> Citation:
+        return Citation(doc_id=self.doc_id, sections=list(self.sections))
 
 
 RULE_CITATIONS = MappingProxyType({
-    RuleId.CURRENCY_UNSUPPORTED: Citation(doc_id="POL-CURRENCY", sections=["2"]),
-    RuleId.RECEIPT_MISSING: Citation(doc_id="POL-RECEIPTS", sections=["1", "2"]),
-    RuleId.DUPLICATE: Citation(doc_id="POL-RECEIPTS", sections=["3", "4"]),
-    RuleId.MEALS_DAILY_LIMIT: Citation(doc_id="POL-MEALS", sections=["1", "3"]),
-    RuleId.LODGING_NIGHTLY_CAP: Citation(doc_id="POL-LODGING", sections=["1", "2", "3"]),
+    RuleId.CURRENCY_UNSUPPORTED: PolicyRef("POL-CURRENCY", ("2",)),
+    RuleId.RECEIPT_MISSING: PolicyRef("POL-RECEIPTS", ("1", "2")),
+    RuleId.DUPLICATE: PolicyRef("POL-RECEIPTS", ("3", "4")),
+    RuleId.MEALS_DAILY_LIMIT: PolicyRef("POL-MEALS", ("1", "3")),
+    RuleId.LODGING_NIGHTLY_CAP: PolicyRef("POL-LODGING", ("1", "2", "3")),
 })
 
 PER_DIEM_CITATIONS = MappingProxyType({
-    "multi_day": Citation(doc_id="POL-PERDIEM", sections=["1", "2"]),
-    "same_day": Citation(doc_id="POL-PERDIEM", sections=["1", "3"]),
+    "multi_day": PolicyRef("POL-PERDIEM", ("1", "2")),
+    "same_day": PolicyRef("POL-PERDIEM", ("1", "3")),
 })
 
-_RULE_ORDER = list(RuleId)
+_RULE_ORDER = tuple(RuleId)
 
 
 @dataclass
@@ -68,7 +69,7 @@ def _violation(
 ) -> Violation:
     return Violation(
         rule_id=rule, line_nos=sorted(line_nos), date=day, excess_usd=excess_usd,
-        message=message, citation=RULE_CITATIONS[rule].model_copy(deep=True),
+        message=message, citation=RULE_CITATIONS[rule].citation(),
     )
 
 
@@ -199,15 +200,15 @@ def _per_diem(claim: Claim, policy: Policy) -> PerDiem:
     days = (trip.end_date - trip.start_date).days + 1
     if days == 1:
         amount = rate * policy.same_day_fraction
-        citation = PER_DIEM_CITATIONS["same_day"]
+        ref = PER_DIEM_CITATIONS["same_day"]
     else:
         travel_days_amount = rate * policy.travel_day_fraction
         full_days = days - 2  # first and last day are paid at the travel-day fraction
         amount = travel_days_amount + rate * full_days + travel_days_amount
-        citation = PER_DIEM_CITATIONS["multi_day"]
+        ref = PER_DIEM_CITATIONS["multi_day"]
     return PerDiem(
         city=trip.destination_city, daily_rate_usd=to_cents(rate), days=days,
-        amount_usd=to_cents(amount), citation=citation.model_copy(deep=True),
+        amount_usd=to_cents(amount), citation=ref.citation(),
     )
 
 

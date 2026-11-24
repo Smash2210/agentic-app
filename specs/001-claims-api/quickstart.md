@@ -23,7 +23,8 @@ uv run python -m agentic_app.claims.seed --db data/claims.db
 ```
 
 Expected: `Loaded 12 claims`. Running it again exits with an error because the DB is not empty
-(delete `data/claims.db` to start over).
+(delete `data/claims.db` to start over). Run it from the repository root: the default seed file is
+`data/seed/claims.json`; pass `--seed FILE` to load a different one.
 
 ## 3. Run the server
 
