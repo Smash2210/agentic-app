@@ -1,7 +1,7 @@
 """Write the Claims API OpenAPI spec to docs/api/openapi.json, or check that it is up to date.
 
-    uv run python scripts/export_openapi.py          # write
-    uv run python scripts/export_openapi.py --check  # exit 1 if the file is stale (used by CI)
+    uv run python scripts/exports_openapi.py          # write
+    uv run python scripts/exports_openapi.py --check  # exit 1 if the file is stale (used by CI)
 """
 
 import argparse
@@ -30,7 +30,7 @@ def main() -> int:
     spec = render()
     if args.check:
         if not OUT.exists() or OUT.read_text(encoding="utf-8") != spec:
-            print(f"{OUT.relative_to(REPO)} is stale: run scripts/export_openapi.py", file=sys.stderr)
+            print(f"{OUT.relative_to(REPO)} is stale: run scripts/exports_openapi.py", file=sys.stderr)
             return 1
         print(f"{OUT.relative_to(REPO)} is up to date")
         return 0
