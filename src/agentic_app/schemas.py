@@ -4,6 +4,7 @@ Money is Decimal everywhere and is serialised to JSON as a string. Request money
 as a JSON string (research R-05).
 """
 
+import re
 from datetime import date, timedelta
 from decimal import Decimal
 from enum import StrEnum
@@ -36,21 +37,45 @@ def _not_blank(value: str) -> str:
     return value
 
 
-def _money_must_be_string(value: Any) -> Any:
+# Input bounds (spec FR-002, Clarifications "M06 security").
+MAX_AMOUNT = Decimal("1000000.00")
+MAX_TRIP_DAYS = 366
+MAX_LINES = 50
+MAX_TEXT = 200
+
+# ASCII digits only: Python's \d and Decimal also accept other scripts' digits.
+_PLAIN_DECIMAL = re.compile(r"[0-9]+(\.[0-9]{0,2})?")
+
+
+def _money_must_be_plain_decimal_string(value: Any) -> Any:
     if not isinstance(value, str):
         raise ValueError('money must be sent as a string such as "12.50", not a number')
+    value = value.strip()
+    if not _PLAIN_DECIMAL.fullmatch(value):
+        raise ValueError(
+            'money must be plain decimal text such as "12.50": digits, optionally "." and at '
+            "most 2 decimals, no sign or exponent"
+        )
     return value
 
 
+def _trimmed(value: str) -> str:
+    return _not_blank(value).strip()
+
+
 def _normalise_currency(value: str) -> str:
-    return _not_blank(value).strip().upper()
+    return _trimmed(value).upper()
 
 
 NonBlankStr = Annotated[str, AfterValidator(_not_blank)]
+BoundedText = Annotated[NonBlankStr, Field(max_length=MAX_TEXT)]
 MoneyIn = Annotated[
-    Decimal, BeforeValidator(_money_must_be_string), Field(gt=0, decimal_places=2)
+    Decimal,
+    BeforeValidator(_money_must_be_plain_decimal_string),
+    Field(gt=0, le=MAX_AMOUNT, decimal_places=2),
 ]
 CurrencyCode = Annotated[str, AfterValidator(_normalise_currency)]
+EmployeeId = Annotated[str, Field(max_length=MAX_TEXT), AfterValidator(_trimmed)]
 
 _MONEY_OUT = "JSON string with 2 decimals."
 
@@ -73,14 +98,16 @@ _CLAIM_EXAMPLE = {
 
 
 class Trip(BaseModel):
-    destination_city: Annotated[NonBlankStr, Field(description=(
-        "City the trip is to; must not be blank. Sets the lodging cap and per diem rate, matched "
-        "case-insensitively; a city without its own rate gets the 'any other city' rate."
+    destination_city: Annotated[BoundedText, Field(description=(
+        "City the trip is to; must not be blank, at most 200 characters. Sets the lodging cap and "
+        "per diem rate, matched case-insensitively; a city without its own rate gets the 'any "
+        "other city' rate."
     ))]
     start_date: Annotated[date, Field(description="First day of the trip.")]
-    end_date: Annotated[date, Field(
-        description="Last day of the trip, included. Must not be before start_date."
-    )]
+    end_date: Annotated[date, Field(description=(
+        "Last day of the trip, included. Must not be before start_date; the trip is at most 366 "
+        "days, start to end inclusive."
+    ))]
 
 
 class ExpenseLineIn(BaseModel):
@@ -88,12 +115,13 @@ class ExpenseLineIn(BaseModel):
         "Day of the expense; must be within the trip's dates. For lodging, the first night."
     ))]
     category: Annotated[Category, Field(description="Kind of expense.")]
-    merchant: Annotated[NonBlankStr, Field(description=(
-        "Who was paid; must not be blank. Used to detect duplicate lines."
+    merchant: Annotated[BoundedText, Field(description=(
+        "Who was paid; must not be blank, at most 200 characters. Used to detect duplicate lines."
     ))]
     amount: Annotated[MoneyIn, Field(description=(
         'Amount in `currency`, as a JSON string such as "12.50" (a JSON number is rejected). '
-        "Greater than 0, at most 2 decimals."
+        'Plain decimal text: digits, optionally "." and at most 2 decimals (no sign or exponent '
+        'such as "1e2"). Greater than 0, at most 1000000.00.'
     ))]
     currency: Annotated[CurrencyCode, Field(description=(
         "3-letter currency code, upper-cased on submit. Supported: USD, EUR, GBP, INR. Any other "
@@ -133,12 +161,13 @@ def _cross_field_error(loc: tuple, message: str, value: Any) -> InitErrorDetails
 class ClaimIn(BaseModel):
     model_config = ConfigDict(json_schema_extra={"examples": [_CLAIM_EXAMPLE]})
 
-    employee_id: Annotated[NonBlankStr, Field(
-        description="Employee making the claim, e.g. E-001; must not be blank."
-    )]
+    employee_id: Annotated[EmployeeId, Field(description=(
+        "Employee making the claim, e.g. E-001; must not be blank, at most 200 characters. "
+        "Trimmed on submit."
+    ))]
     trip: Annotated[Trip, Field(description="The trip the expenses belong to.")]
-    lines: Annotated[list[ExpenseLineIn], Field(min_length=1, description=(
-        "Expense lines, at least one. They are numbered 1, 2, ... in this order."
+    lines: Annotated[list[ExpenseLineIn], Field(min_length=1, max_length=MAX_LINES, description=(
+        "Expense lines, at least one and at most 50. They are numbered 1, 2, ... in this order."
     ))]
 
     @model_validator(mode="after")
@@ -149,6 +178,11 @@ class ClaimIn(BaseModel):
         if trip.end_date < trip.start_date:
             errors.append(_cross_field_error(
                 ("trip", "end_date"), "end_date must not be before start_date", trip.end_date
+            ))
+        elif (trip.end_date - trip.start_date).days + 1 > MAX_TRIP_DAYS:
+            errors.append(_cross_field_error(
+                ("trip", "end_date"), f"the trip must be at most {MAX_TRIP_DAYS} days long",
+                trip.end_date,
             ))
         for i, line in enumerate(self.lines):
             if not trip.start_date <= line.date <= trip.end_date:

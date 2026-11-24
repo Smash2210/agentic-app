@@ -1,0 +1,40 @@
+name: security
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  secrets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # scan the whole history, not just the latest commit
+
+      - name: gitleaks (secrets in any commit)
+        run: docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.21.2 git /repo --redact --verbose
+
+  code-and-dependencies:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+
+      - name: pip-audit (known vulnerabilities in locked dependencies)
+        run: |
+          uv export --format requirements-txt --no-hashes --no-emit-project > requirements-audit.txt
+          uvx pip-audit@2.10.1 -r requirements-audit.txt --no-deps
+
+      - name: bandit (Python security issues, medium and above)
+        run: uvx bandit@1.9.4 -r src review scripts -ll
+
+      - name: semgrep (insecure code patterns)
+        run: uvx semgrep@1.186.0 scan --config p/python --metrics off --error src review scripts

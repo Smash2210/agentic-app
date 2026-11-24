@@ -117,6 +117,37 @@ def test_invalid_claim_is_refused_and_nothing_is_stored(client, db_path, change,
     assert claim_count(db_path) == before
 
 
+@pytest.mark.parametrize(
+    ("change", "loc"),
+    [
+        # S2 (M03 AI review): a huge amount was stored, then crashed the check with a 500.
+        (lambda b: b["lines"][1].update(amount="1" + "0" * 30 + ".00"),
+         ["body", "lines", 1, "amount"]),
+        # P2: "1e2" was stored and echoed as "1E+2".
+        (lambda b: b["lines"][1].update(amount="1e2"), ["body", "lines", 1, "amount"]),
+        # S3: a trip to 9999-12-31 with 2,900,000 nights made every check take seconds.
+        (lambda b: (b["trip"].update(end_date="9999-12-31"),
+                    b["lines"][2].update(nights=2_900_000)),
+         ["body", "trip", "end_date"]),
+        (lambda b: b.update(lines=[b["lines"][0]] * 51), ["body", "lines"]),
+        (lambda b: b.update(employee_id="E" * 201), ["body", "employee_id"]),
+    ],
+)
+def test_m06_attack_is_refused_and_nothing_is_stored(client, db_path, change, loc):
+    response = client.post("/claims", json=body_with(change))
+
+    assert response.status_code == 422
+    assert loc in [error["loc"] for error in response.json()["detail"]]
+    assert claim_count(db_path) == 0
+
+
+def test_employee_id_is_trimmed(client):  # S4
+    response = client.post("/claims", json=body_with(lambda b: b.update(employee_id=" E-7 ")))
+
+    assert response.status_code == 201
+    assert response.json()["employee_id"] == "E-7"
+
+
 def test_every_field_error_is_listed(client, db_path):
     def change(b):
         b["employee_id"] = ""
