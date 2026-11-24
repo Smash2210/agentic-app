@@ -18,6 +18,7 @@ there is no "review edits" diff. The checks below are the evidence of review.
 | Money shown as JSON strings in examples | Yes; no numeric amounts in any example |
 | No internal wording (user story, FR/R/T numbers) | None found |
 | README edited only between the markers | Yes |
+| Every request example actually works | All 4 `curl` examples in `claims.md` run against the app (FastAPI `TestClient`, temp database): `POST /claims` 201, `GET /claims?employee_id=E-001` 200, `GET /claims/1` 200, `GET /claims/1/check` 200 with total 564.00, matching the contract |
 
 The coverage checks above were also run mechanically against `openapi.json` (endpoints, status codes,
 fields, enums, numeric amounts in examples), not only by eye.
