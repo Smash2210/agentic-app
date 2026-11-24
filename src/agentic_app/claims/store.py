@@ -51,7 +51,7 @@ def init_db(conn: sqlite3.Connection) -> None:
 
 def _insert_line(conn: sqlite3.Connection, claim_id: int, line_no: int, line: ExpenseLineIn) -> None:
     conn.execute(
-        f"INSERT INTO expense_lines (claim_id, {_LINE_COLUMNS}) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        f"INSERT INTO expense_lines (claim_id, {_LINE_COLUMNS}) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",  # nosec B608 - fixed column list, values parameterised
         (
             claim_id, line_no, line.date.isoformat(), line.category.value, line.merchant,
             str(line.amount), line.currency, int(line.receipt_attached), line.nights,
@@ -100,7 +100,7 @@ def get_claim(conn: sqlite3.Connection, claim_id: int) -> Claim | None:
         return None
     _, employee_id, city, start_date, end_date = row
     lines = conn.execute(
-        f"SELECT {_LINE_COLUMNS} FROM expense_lines WHERE claim_id = ? ORDER BY line_no",
+        f"SELECT {_LINE_COLUMNS} FROM expense_lines WHERE claim_id = ? ORDER BY line_no",  # nosec B608 - fixed column list, values parameterised
         (claim_id,),
     ).fetchall()
     return Claim(
