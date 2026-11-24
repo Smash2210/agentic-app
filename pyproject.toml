@@ -20,3 +20,11 @@ build-backend = "uv_build"
 dev = [
     "pytest>=9.2.0",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Default run is offline; live tests need: uv run pytest -m live
+addopts = "-m 'not live'"
+markers = [
+    "live: calls the real Gemini API (needs GOOGLE_API_KEY and GEMINI_MODEL)",
+]
