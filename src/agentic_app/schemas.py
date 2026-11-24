@@ -13,6 +13,7 @@ from pydantic import (
     AfterValidator,
     BaseModel,
     BeforeValidator,
+    ConfigDict,
     Field,
     ValidationError,
     ValidationInfo,
@@ -51,25 +52,63 @@ MoneyIn = Annotated[
 ]
 CurrencyCode = Annotated[str, AfterValidator(_normalise_currency)]
 
+_MONEY_OUT = "JSON string with 2 decimals."
+
+# The claim in contracts/claims-api.md, shown as the request example in the OpenAPI docs.
+_CLAIM_EXAMPLE = {
+    "employee_id": "E-001",
+    "trip": {"destination_city": "Berlin", "start_date": "2026-03-10", "end_date": "2026-03-12"},
+    "lines": [
+        {"date": "2026-03-10", "category": "meal", "merchant": "Cafe Roma",
+         "amount": "50.00", "currency": "EUR", "receipt_attached": True},
+        {"date": "2026-03-10", "category": "meal", "merchant": "Imbiss 24",
+         "amount": "30.00", "currency": "USD", "receipt_attached": False},
+        {"date": "2026-03-10", "category": "lodging", "merchant": "Hotel Mitte",
+         "amount": "400.00", "currency": "EUR", "receipt_attached": True, "nights": 2},
+    ],
+}
+
 
 # --- input --------------------------------------------------------------------------------------
 
 
 class Trip(BaseModel):
-    destination_city: NonBlankStr
-    start_date: date
-    end_date: date
+    destination_city: Annotated[NonBlankStr, Field(description=(
+        "City the trip is to; must not be blank. Sets the lodging cap and per diem rate, matched "
+        "case-insensitively; a city without its own rate gets the 'any other city' rate."
+    ))]
+    start_date: Annotated[date, Field(description="First day of the trip.")]
+    end_date: Annotated[date, Field(
+        description="Last day of the trip, included. Must not be before start_date."
+    )]
 
 
 class ExpenseLineIn(BaseModel):
-    date: date
-    category: Category
-    merchant: NonBlankStr
-    amount: MoneyIn
-    currency: CurrencyCode
-    receipt_attached: bool
+    date: Annotated[date, Field(description=(
+        "Day of the expense; must be within the trip's dates. For lodging, the first night."
+    ))]
+    category: Annotated[Category, Field(description="Kind of expense.")]
+    merchant: Annotated[NonBlankStr, Field(description=(
+        "Who was paid; must not be blank. Used to detect duplicate lines."
+    ))]
+    amount: Annotated[MoneyIn, Field(description=(
+        'Amount in `currency`, as a JSON string such as "12.50" (a JSON number is rejected). '
+        "Greater than 0, at most 2 decimals."
+    ))]
+    currency: Annotated[CurrencyCode, Field(description=(
+        "3-letter currency code, upper-cased on submit. Supported: USD, EUR, GBP, INR. Any other "
+        "code is accepted here and flagged as CURRENCY_UNSUPPORTED when the claim is checked."
+    ))]
+    receipt_attached: Annotated[bool, Field(description=(
+        "Whether a receipt is attached. A line over 25 USD (after conversion) without a receipt "
+        "is not reimbursed."
+    ))]
     nights: Annotated[int, Field(strict=True, ge=1)] | None = Field(
-        default=None, validate_default=True
+        default=None, validate_default=True, description=(
+            "Lodging lines only: number of nights, integer of at least 1, default 1. `date` is "
+            "the first night; the last night must not be after the trip's end date. Omit (or "
+            "send null) for other categories."
+        ),
     )
 
     @field_validator("nights")
@@ -92,9 +131,15 @@ def _cross_field_error(loc: tuple, message: str, value: Any) -> InitErrorDetails
 
 
 class ClaimIn(BaseModel):
-    employee_id: NonBlankStr
-    trip: Trip
-    lines: Annotated[list[ExpenseLineIn], Field(min_length=1)]
+    model_config = ConfigDict(json_schema_extra={"examples": [_CLAIM_EXAMPLE]})
+
+    employee_id: Annotated[NonBlankStr, Field(
+        description="Employee making the claim, e.g. E-001; must not be blank."
+    )]
+    trip: Annotated[Trip, Field(description="The trip the expenses belong to.")]
+    lines: Annotated[list[ExpenseLineIn], Field(min_length=1, description=(
+        "Expense lines, at least one. They are numbered 1, 2, ... in this order."
+    ))]
 
     @model_validator(mode="after")
     def _check_dates_against_trip(self) -> "ClaimIn":
@@ -128,21 +173,25 @@ class ClaimIn(BaseModel):
 
 
 class ExpenseLine(BaseModel):
-    line_no: int
-    date: date
-    category: Category
-    merchant: str
-    amount: Decimal
-    currency: str
-    receipt_attached: bool
-    nights: int | None
+    line_no: Annotated[int, Field(description="Position of the line in the claim, from 1.")]
+    date: Annotated[date, Field(description="Day of the expense. For lodging, the first night.")]
+    category: Annotated[Category, Field(description="Kind of expense.")]
+    merchant: Annotated[str, Field(description="Who was paid.")]
+    amount: Annotated[Decimal, Field(
+        description="Amount in `currency`, as submitted. JSON string."
+    )]
+    currency: Annotated[str, Field(description="Currency code, upper-cased.")]
+    receipt_attached: Annotated[bool, Field(description="Whether a receipt is attached.")]
+    nights: Annotated[int | None, Field(description=(
+        "Lodging: number of nights (1 if it was omitted). Null for other categories."
+    ))]
 
 
 class Claim(BaseModel):
-    id: int
-    employee_id: str
-    trip: Trip
-    lines: list[ExpenseLine]
+    id: Annotated[int, Field(description="Claim ID, assigned on submit.")]
+    employee_id: Annotated[str, Field(description="Employee who made the claim.")]
+    trip: Annotated[Trip, Field(description="The trip the expenses belong to.")]
+    lines: Annotated[list[ExpenseLine], Field(description="Expense lines, in line_no order.")]
 
 
 class PriorLine(BaseModel):
@@ -160,7 +209,9 @@ class PriorLine(BaseModel):
 
 
 class RuleId(StrEnum):
-    """Violation rule IDs, in the order violations are reported (research R-09)."""
+    """Violation rule IDs, in the order violations are reported."""
+
+    # Order and IDs: research R-09.
 
     CURRENCY_UNSUPPORTED = "CURRENCY_UNSUPPORTED"
     RECEIPT_MISSING = "RECEIPT_MISSING"
@@ -170,39 +221,78 @@ class RuleId(StrEnum):
 
 
 class Citation(BaseModel):
-    doc_id: str
-    sections: list[str]
+    doc_id: Annotated[str, Field(description="Policy document ID, e.g. POL-MEALS.")]
+    sections: Annotated[list[str], Field(
+        description='Section numbers in that document, e.g. ["1", "2"].'
+    )]
 
 
 class Violation(BaseModel):
-    rule_id: RuleId
-    line_nos: list[int]
-    date: date | None
-    excess_usd: Decimal | None
-    message: str
-    citation: Citation
+    rule_id: Annotated[RuleId, Field(description="The rule that was broken.")]
+    line_nos: Annotated[list[int], Field(description="The lines affected, ascending.")]
+    date: Annotated[date | None, Field(description=(
+        "The day (MEALS_DAILY_LIMIT) or night (LODGING_NIGHTLY_CAP) concerned; null for the "
+        "other rules."
+    ))]
+    excess_usd: Annotated[Decimal | None, Field(description=(
+        "USD rejected by this violation, as a " + _MONEY_OUT + " Set only for "
+        "MEALS_DAILY_LIMIT and LODGING_NIGHTLY_CAP; null for the other rules."
+    ))]
+    message: Annotated[str, Field(description=(
+        "Plain-language explanation with the amounts and the limit. The wording may change; "
+        "do not parse it."
+    ))]
+    citation: Annotated[Citation, Field(description="Where the rule is in the policy.")]
 
 
 class LineResult(BaseModel):
-    line_no: int
-    claimed_usd: Decimal | None
-    reimbursable_usd: Decimal
-    rejected_usd: Decimal | None
-    flagged_for_review: bool
+    line_no: Annotated[int, Field(description="The line this result is for.")]
+    claimed_usd: Annotated[Decimal | None, Field(description=(
+        "The line's amount converted to USD, rounded half-up, as a " + _MONEY_OUT + " Null when "
+        "the currency is not supported."
+    ))]
+    reimbursable_usd: Annotated[Decimal, Field(description=(
+        "USD reimbursed for this line (0.00 or more), as a " + _MONEY_OUT
+    ))]
+    rejected_usd: Annotated[Decimal | None, Field(description=(
+        "claimed_usd minus reimbursable_usd, as a " + _MONEY_OUT + " Null when claimed_usd is "
+        "null."
+    ))]
+    flagged_for_review: Annotated[bool, Field(description=(
+        "True when the line duplicates an earlier line and was rejected."
+    ))]
 
 
 class PerDiem(BaseModel):
-    city: str
-    daily_rate_usd: Decimal
-    days: int
-    amount_usd: Decimal
-    citation: Citation
+    city: Annotated[str, Field(description="Destination city, as submitted.")]
+    daily_rate_usd: Annotated[Decimal, Field(description=(
+        "Per diem rate for the city, as a " + _MONEY_OUT
+    ))]
+    days: Annotated[int, Field(description="Calendar days of the trip, both ends included.")]
+    amount_usd: Annotated[Decimal, Field(description=(
+        "Per diem paid, as a " + _MONEY_OUT + " The first and last day are paid at 75% of the "
+        "daily rate, the days in between at 100%; a same-day trip is one day at 75%."
+    ))]
+    citation: Annotated[Citation, Field(description="Where the per diem rules are in the policy.")]
 
 
 class CheckResult(BaseModel):
-    claim_id: int
-    lines: list[LineResult]
-    violations: list[Violation]
-    per_diem: PerDiem
-    lines_reimbursable_usd: Decimal
-    total_reimbursable_usd: Decimal
+    claim_id: Annotated[int, Field(description="The claim that was checked.")]
+    lines: Annotated[list[LineResult], Field(description="One result per line, in line_no order.")]
+    violations: Annotated[list[Violation], Field(description=(
+        "Every policy violation found; empty if there are none. Sorted by rule (in the order "
+        "the rule_id values are listed), then date, then first line number."
+    ))]
+    per_diem: Annotated[PerDiem, Field(description="Per diem for the trip.")]
+    lines_reimbursable_usd: Annotated[Decimal, Field(description=(
+        "Sum of reimbursable_usd over all lines, as a " + _MONEY_OUT
+    ))]
+    total_reimbursable_usd: Annotated[Decimal, Field(description=(
+        "lines_reimbursable_usd plus per_diem.amount_usd, as a " + _MONEY_OUT
+    ))]
+
+
+class NotFound(BaseModel):
+    """Error body when no claim has the requested ID."""
+
+    detail: Annotated[str, Field(description="What was not found, e.g. Claim 99 not found.")]

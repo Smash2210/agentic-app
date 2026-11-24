@@ -26,7 +26,15 @@ def create_app(db_path: Path, policy_dir: Path) -> FastAPI:
     finally:
         conn.close()
 
-    app = FastAPI(title="Expense & Travel Policy Copilot — Claims API")
+    app = FastAPI(
+        title="Expense & Travel Policy Copilot — Claims API",
+        version="0.1.0",
+        description=(
+            "Submit expense claims and check them against the company's currency, receipts, "
+            "meals, lodging and per diem policies. Money is always a JSON string (never a "
+            "number); checked amounts are in USD. Dates are YYYY-MM-DD."
+        ),
+    )
     app.state.policy = policy
     app.state.db_path = Path(db_path)
     app.include_router(router)
