@@ -70,6 +70,23 @@ def test_get_client_uses_timeout_from_env_and_is_cached(monkeypatch):
     assert built.call_args.kwargs["http_options"].timeout == 5000
 
 
+def test_get_client_defaults_timeout_when_env_unset(monkeypatch):
+    built = MagicMock()
+    monkeypatch.setattr(llm.genai, "Client", built)
+    monkeypatch.delenv("GEMINI_TIMEOUT_MS", raising=False)
+
+    llm.get_client()
+
+    assert built.call_args.kwargs["http_options"].timeout == 30000
+
+
+def test_empty_response_raises_instead_of_returning_none(fake_client):
+    fake_client.models.generate_content.return_value.text = None
+
+    with pytest.raises(RuntimeError, match="no text"):
+        llm.generate("hello")
+
+
 @pytest.mark.live
 @pytest.mark.skipif(not os.getenv("GOOGLE_API_KEY"), reason="needs GOOGLE_API_KEY")
 def test_live_gemini_call():

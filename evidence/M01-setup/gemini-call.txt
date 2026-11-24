@@ -1,0 +1,6 @@
+$ uv run pytest -m live -v   # 2026-11-24 11:57 IST, model=gemini-3.5-flash-lite, google-genai 3.6.1
+tests/test_llm.py::test_live_gemini_call PASSED                          [100%]
+======================= 1 passed, 8 deselected in 0.86s ========================
+
+$ uv run agentic-app "In one sentence, what is a per diem?"
+A per diem is a daily allowance provided by an employer to cover lodging, meals, and incidental expenses incurred while an employee is traveling for business.
