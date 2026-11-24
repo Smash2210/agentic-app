@@ -245,12 +245,13 @@ def test_duplicate_meal_counts_zero_toward_limit():
 
 
 def test_leftover_cent_on_last_night_decides_which_nights_are_over():
-    """FR-017 / clarification Q5: 420.02 / 3 = 140.0067 -> 140.01, 140.01, last 420.02 - 280.02
-    = 140.00. Paris cap 140: nights 1 and 2 over by 0.01 each, night 3 fine."""
+    """FR-017 / clarification Q5 (amended in M03: shares rounded down): 420.02 / 3 = 140.0067 ->
+    140.00, 140.00, last 420.02 - 280.00 = 140.02. Paris cap 140: only night 3 is over, by 0.02.
+    (Under the original half-up rule this was nights 1 and 2 over by 0.01 each.)"""
     c = claim([line(1, D1, "lodging", "420.02", nights=3)], end=D3)
     result = run(c)
     caps = of_rule(result, "LODGING_NIGHTLY_CAP")
-    assert [(v.date, v.excess_usd) for v in caps] == [(D1, D("0.01")), (D2, D("0.01"))]
+    assert [(v.date, v.excess_usd) for v in caps] == [(D3, D("0.02"))]
     assert result.lines[0].reimbursable_usd == D("420.00")
     assert result.lines[0].rejected_usd == D("0.02")
 

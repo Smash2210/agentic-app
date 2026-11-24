@@ -11,7 +11,7 @@ from datetime import date, timedelta
 from decimal import Decimal
 from types import MappingProxyType
 
-from agentic_app.claims.money import to_cents
+from agentic_app.claims.money import to_cents, to_cents_down
 from agentic_app.claims.policy import Policy
 from agentic_app.schemas import (
     Category,
@@ -154,9 +154,10 @@ def _apply_meals_limit(
 
 
 def _night_shares(state: _LineState) -> list[tuple[date, Decimal]]:
-    """Split a lodging line evenly per night; the last night takes any leftover cent (R-10)."""
+    """Split a lodging line evenly per night, rounding each share down, so the last night's
+    leftover is never negative (R-10)."""
     nights = state.line.nights or 1
-    share = to_cents(state.claimed_usd / nights)
+    share = to_cents_down(state.claimed_usd / nights)
     shares = [share] * (nights - 1) + [state.claimed_usd - share * (nights - 1)]
     return [(state.line.date + timedelta(days=k), amount) for k, amount in enumerate(shares)]
 
