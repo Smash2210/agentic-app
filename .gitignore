@@ -9,3 +9,5 @@ wheels/
 # Virtual environments
 .venv
 .env
+# Local claims database (001-claims-api)
+data/claims.db
