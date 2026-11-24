@@ -1,0 +1,787 @@
+{
+  "components": {
+    "schemas": {
+      "Category": {
+        "enum": [
+          "meal",
+          "lodging",
+          "transport",
+          "other"
+        ],
+        "title": "Category",
+        "type": "string"
+      },
+      "CheckResult": {
+        "properties": {
+          "claim_id": {
+            "description": "The claim that was checked.",
+            "title": "Claim Id",
+            "type": "integer"
+          },
+          "lines": {
+            "description": "One result per line, in line_no order.",
+            "items": {
+              "$ref": "#/components/schemas/LineResult"
+            },
+            "title": "Lines",
+            "type": "array"
+          },
+          "lines_reimbursable_usd": {
+            "description": "Sum of reimbursable_usd over all lines, as a JSON string with 2 decimals.",
+            "title": "Lines Reimbursable Usd",
+            "type": "string"
+          },
+          "per_diem": {
+            "$ref": "#/components/schemas/PerDiem",
+            "description": "Per diem for the trip."
+          },
+          "total_reimbursable_usd": {
+            "description": "lines_reimbursable_usd plus per_diem.amount_usd, as a JSON string with 2 decimals.",
+            "title": "Total Reimbursable Usd",
+            "type": "string"
+          },
+          "violations": {
+            "description": "Every policy violation found; empty if there are none. Sorted by rule (in the order the rule_id values are listed), then date, then first line number.",
+            "items": {
+              "$ref": "#/components/schemas/Violation"
+            },
+            "title": "Violations",
+            "type": "array"
+          }
+        },
+        "required": [
+          "claim_id",
+          "lines",
+          "violations",
+          "per_diem",
+          "lines_reimbursable_usd",
+          "total_reimbursable_usd"
+        ],
+        "title": "CheckResult",
+        "type": "object"
+      },
+      "Citation": {
+        "properties": {
+          "doc_id": {
+            "description": "Policy document ID, e.g. POL-MEALS.",
+            "title": "Doc Id",
+            "type": "string"
+          },
+          "sections": {
+            "description": "Section numbers in that document, e.g. [\"1\", \"2\"].",
+            "items": {
+              "type": "string"
+            },
+            "title": "Sections",
+            "type": "array"
+          }
+        },
+        "required": [
+          "doc_id",
+          "sections"
+        ],
+        "title": "Citation",
+        "type": "object"
+      },
+      "Claim": {
+        "properties": {
+          "employee_id": {
+            "description": "Employee who made the claim.",
+            "title": "Employee Id",
+            "type": "string"
+          },
+          "id": {
+            "description": "Claim ID, assigned on submit.",
+            "title": "Id",
+            "type": "integer"
+          },
+          "lines": {
+            "description": "Expense lines, in line_no order.",
+            "items": {
+              "$ref": "#/components/schemas/ExpenseLine"
+            },
+            "title": "Lines",
+            "type": "array"
+          },
+          "trip": {
+            "$ref": "#/components/schemas/Trip",
+            "description": "The trip the expenses belong to."
+          }
+        },
+        "required": [
+          "id",
+          "employee_id",
+          "trip",
+          "lines"
+        ],
+        "title": "Claim",
+        "type": "object"
+      },
+      "ClaimIn": {
+        "examples": [
+          {
+            "employee_id": "E-001",
+            "lines": [
+              {
+                "amount": "50.00",
+                "category": "meal",
+                "currency": "EUR",
+                "date": "2026-03-10",
+                "merchant": "Cafe Roma",
+                "receipt_attached": true
+              },
+              {
+                "amount": "30.00",
+                "category": "meal",
+                "currency": "USD",
+                "date": "2026-03-10",
+                "merchant": "Imbiss 24",
+                "receipt_attached": false
+              },
+              {
+                "amount": "400.00",
+                "category": "lodging",
+                "currency": "EUR",
+                "date": "2026-03-10",
+                "merchant": "Hotel Mitte",
+                "nights": 2,
+                "receipt_attached": true
+              }
+            ],
+            "trip": {
+              "destination_city": "Berlin",
+              "end_date": "2026-03-12",
+              "start_date": "2026-03-10"
+            }
+          }
+        ],
+        "properties": {
+          "employee_id": {
+            "description": "Employee making the claim, e.g. E-001; must not be blank.",
+            "title": "Employee Id",
+            "type": "string"
+          },
+          "lines": {
+            "description": "Expense lines, at least one. They are numbered 1, 2, ... in this order.",
+            "items": {
+              "$ref": "#/components/schemas/ExpenseLineIn"
+            },
+            "minItems": 1,
+            "title": "Lines",
+            "type": "array"
+          },
+          "trip": {
+            "$ref": "#/components/schemas/Trip",
+            "description": "The trip the expenses belong to."
+          }
+        },
+        "required": [
+          "employee_id",
+          "trip",
+          "lines"
+        ],
+        "title": "ClaimIn",
+        "type": "object"
+      },
+      "ExpenseLine": {
+        "properties": {
+          "amount": {
+            "description": "Amount in `currency`, as submitted. JSON string.",
+            "title": "Amount",
+            "type": "string"
+          },
+          "category": {
+            "$ref": "#/components/schemas/Category",
+            "description": "Kind of expense."
+          },
+          "currency": {
+            "description": "Currency code, upper-cased.",
+            "title": "Currency",
+            "type": "string"
+          },
+          "date": {
+            "description": "Day of the expense. For lodging, the first night.",
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          },
+          "line_no": {
+            "description": "Position of the line in the claim, from 1.",
+            "title": "Line No",
+            "type": "integer"
+          },
+          "merchant": {
+            "description": "Who was paid.",
+            "title": "Merchant",
+            "type": "string"
+          },
+          "nights": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Lodging: number of nights (1 if it was omitted). Null for other categories.",
+            "title": "Nights"
+          },
+          "receipt_attached": {
+            "description": "Whether a receipt is attached.",
+            "title": "Receipt Attached",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "line_no",
+          "date",
+          "category",
+          "merchant",
+          "amount",
+          "currency",
+          "receipt_attached",
+          "nights"
+        ],
+        "title": "ExpenseLine",
+        "type": "object"
+      },
+      "ExpenseLineIn": {
+        "properties": {
+          "amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "decimal_places": 2,
+            "description": "Amount in `currency`, as a JSON string such as \"12.50\" (a JSON number is rejected). Greater than 0, at most 2 decimals.",
+            "gt": 0,
+            "title": "Amount"
+          },
+          "category": {
+            "$ref": "#/components/schemas/Category",
+            "description": "Kind of expense."
+          },
+          "currency": {
+            "description": "3-letter currency code, upper-cased on submit. Supported: USD, EUR, GBP, INR. Any other code is accepted here and flagged as CURRENCY_UNSUPPORTED when the claim is checked.",
+            "title": "Currency",
+            "type": "string"
+          },
+          "date": {
+            "description": "Day of the expense; must be within the trip's dates. For lodging, the first night.",
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          },
+          "merchant": {
+            "description": "Who was paid; must not be blank. Used to detect duplicate lines.",
+            "title": "Merchant",
+            "type": "string"
+          },
+          "nights": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Lodging lines only: number of nights, integer of at least 1, default 1. `date` is the first night; the last night must not be after the trip's end date. Omit (or send null) for other categories.",
+            "title": "Nights"
+          },
+          "receipt_attached": {
+            "description": "Whether a receipt is attached. A line over 25 USD (after conversion) without a receipt is not reimbursed.",
+            "title": "Receipt Attached",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "date",
+          "category",
+          "merchant",
+          "amount",
+          "currency",
+          "receipt_attached"
+        ],
+        "title": "ExpenseLineIn",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "LineResult": {
+        "properties": {
+          "claimed_usd": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The line's amount converted to USD, rounded half-up, as a JSON string with 2 decimals. Null when the currency is not supported.",
+            "title": "Claimed Usd"
+          },
+          "flagged_for_review": {
+            "description": "True when the line duplicates an earlier line and was rejected.",
+            "title": "Flagged For Review",
+            "type": "boolean"
+          },
+          "line_no": {
+            "description": "The line this result is for.",
+            "title": "Line No",
+            "type": "integer"
+          },
+          "reimbursable_usd": {
+            "description": "USD reimbursed for this line (0.00 or more), as a JSON string with 2 decimals.",
+            "title": "Reimbursable Usd",
+            "type": "string"
+          },
+          "rejected_usd": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "claimed_usd minus reimbursable_usd, as a JSON string with 2 decimals. Null when claimed_usd is null.",
+            "title": "Rejected Usd"
+          }
+        },
+        "required": [
+          "line_no",
+          "claimed_usd",
+          "reimbursable_usd",
+          "rejected_usd",
+          "flagged_for_review"
+        ],
+        "title": "LineResult",
+        "type": "object"
+      },
+      "NotFound": {
+        "description": "Error body when no claim has the requested ID.",
+        "properties": {
+          "detail": {
+            "description": "What was not found, e.g. Claim 99 not found.",
+            "title": "Detail",
+            "type": "string"
+          }
+        },
+        "required": [
+          "detail"
+        ],
+        "title": "NotFound",
+        "type": "object"
+      },
+      "PerDiem": {
+        "properties": {
+          "amount_usd": {
+            "description": "Per diem paid, as a JSON string with 2 decimals. The first and last day are paid at 75% of the daily rate, the days in between at 100%; a same-day trip is one day at 75%.",
+            "title": "Amount Usd",
+            "type": "string"
+          },
+          "citation": {
+            "$ref": "#/components/schemas/Citation",
+            "description": "Where the per diem rules are in the policy."
+          },
+          "city": {
+            "description": "Destination city, as submitted.",
+            "title": "City",
+            "type": "string"
+          },
+          "daily_rate_usd": {
+            "description": "Per diem rate for the city, as a JSON string with 2 decimals.",
+            "title": "Daily Rate Usd",
+            "type": "string"
+          },
+          "days": {
+            "description": "Calendar days of the trip, both ends included.",
+            "title": "Days",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "city",
+          "daily_rate_usd",
+          "days",
+          "amount_usd",
+          "citation"
+        ],
+        "title": "PerDiem",
+        "type": "object"
+      },
+      "RuleId": {
+        "description": "Violation rule IDs, in the order violations are reported.",
+        "enum": [
+          "CURRENCY_UNSUPPORTED",
+          "RECEIPT_MISSING",
+          "DUPLICATE",
+          "MEALS_DAILY_LIMIT",
+          "LODGING_NIGHTLY_CAP"
+        ],
+        "title": "RuleId",
+        "type": "string"
+      },
+      "Trip": {
+        "properties": {
+          "destination_city": {
+            "description": "City the trip is to; must not be blank. Sets the lodging cap and per diem rate, matched case-insensitively; a city without its own rate gets the 'any other city' rate.",
+            "title": "Destination City",
+            "type": "string"
+          },
+          "end_date": {
+            "description": "Last day of the trip, included. Must not be before start_date.",
+            "format": "date",
+            "title": "End Date",
+            "type": "string"
+          },
+          "start_date": {
+            "description": "First day of the trip.",
+            "format": "date",
+            "title": "Start Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "destination_city",
+          "start_date",
+          "end_date"
+        ],
+        "title": "Trip",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      },
+      "Violation": {
+        "properties": {
+          "citation": {
+            "$ref": "#/components/schemas/Citation",
+            "description": "Where the rule is in the policy."
+          },
+          "date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The day (MEALS_DAILY_LIMIT) or night (LODGING_NIGHTLY_CAP) concerned; null for the other rules.",
+            "title": "Date"
+          },
+          "excess_usd": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "USD rejected by this violation, as a JSON string with 2 decimals. Set only for MEALS_DAILY_LIMIT and LODGING_NIGHTLY_CAP; null for the other rules.",
+            "title": "Excess Usd"
+          },
+          "line_nos": {
+            "description": "The lines affected, ascending.",
+            "items": {
+              "type": "integer"
+            },
+            "title": "Line Nos",
+            "type": "array"
+          },
+          "message": {
+            "description": "Plain-language explanation with the amounts and the limit. The wording may change; do not parse it.",
+            "title": "Message",
+            "type": "string"
+          },
+          "rule_id": {
+            "$ref": "#/components/schemas/RuleId",
+            "description": "The rule that was broken."
+          }
+        },
+        "required": [
+          "rule_id",
+          "line_nos",
+          "date",
+          "excess_usd",
+          "message",
+          "citation"
+        ],
+        "title": "Violation",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "Submit expense claims and check them against the company's currency, receipts, meals, lodging and per diem policies. Money is always a JSON string (never a number); checked amounts are in USD. Dates are YYYY-MM-DD.",
+    "title": "Expense & Travel Policy Copilot — Claims API",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/claims": {
+      "get": {
+        "description": "Return every claim the employee has submitted, oldest first (ascending ID). Returns an empty list if there are none.",
+        "operationId": "list_for_employee_claims_get",
+        "parameters": [
+          {
+            "description": "Employee whose claims to list, e.g. E-001.",
+            "in": "query",
+            "name": "employee_id",
+            "required": true,
+            "schema": {
+              "description": "Employee whose claims to list, e.g. E-001.",
+              "title": "Employee Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Claim"
+                  },
+                  "title": "Response List For Employee Claims Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List an employee's claims",
+        "tags": [
+          "claims"
+        ]
+      },
+      "post": {
+        "description": "Store an expense claim and return it with its new ID and a `line_no` (1, 2, ...) on each line. Money must be sent as a JSON string such as \"12.50\". Invalid input is answered with 422, listing every error, and nothing is stored. A currency the policy does not support is accepted here and flagged when the claim is checked.",
+        "operationId": "submit_claims_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClaimIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Claim"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Submit a claim",
+        "tags": [
+          "claims"
+        ]
+      }
+    },
+    "/claims/{claim_id}": {
+      "get": {
+        "description": "Return one stored claim, in the same shape as the submit response.",
+        "operationId": "get_one_claims__claim_id__get",
+        "parameters": [
+          {
+            "description": "ID returned when the claim was submitted.",
+            "in": "path",
+            "name": "claim_id",
+            "required": true,
+            "schema": {
+              "description": "ID returned when the claim was submitted.",
+              "title": "Claim Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Claim"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Claim 99 not found"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/NotFound"
+                }
+              }
+            },
+            "description": "No claim with this ID."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get a claim",
+        "tags": [
+          "claims"
+        ]
+      }
+    },
+    "/claims/{claim_id}/check": {
+      "get": {
+        "description": "Check a stored claim against the expense policies and return what is reimbursable. Each line is converted to USD; the receipt, duplicate, meals and lodging rules are applied; the per diem for the trip is added. Every violation is listed with the policy sections it comes from. Read-only: the result is computed on every call and never stored. Duplicates are looked for within the claim and in the same employee's earlier claims.",
+        "operationId": "check_claims__claim_id__check_get",
+        "parameters": [
+          {
+            "description": "ID returned when the claim was submitted.",
+            "in": "path",
+            "name": "claim_id",
+            "required": true,
+            "schema": {
+              "description": "ID returned when the claim was submitted.",
+              "title": "Claim Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Claim 99 not found"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/NotFound"
+                }
+              }
+            },
+            "description": "No claim with this ID."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Check a claim against policy",
+        "tags": [
+          "claims"
+        ]
+      }
+    }
+  }
+}
