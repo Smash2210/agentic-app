@@ -1,0 +1,143 @@
+113.89 mutations/second
+    agentic_app.schemas.x__not_blank__mutmut_2: survived
+    agentic_app.schemas.x__not_blank__mutmut_3: survived
+    agentic_app.schemas.x__not_blank__mutmut_4: survived
+    agentic_app.schemas.x__money_must_be_string__mutmut_3: survived
+    agentic_app.schemas.x__cross_field_error__mutmut_3: survived
+    agentic_app.schemas.x__cross_field_error__mutmut_6: survived
+    agentic_app.schemas.x__cross_field_error__mutmut_11: survived
+    agentic_app.schemas.x__cross_field_error__mutmut_12: survived
+    agentic_app.app.x_create_app__mutmut_10: survived
+    agentic_app.app.x_create_app__mutmut_11: survived
+    agentic_app.app.x_create_app__mutmut_12: survived
+    agentic_app.app.x_app_from_env__mutmut_1: no tests
+    agentic_app.app.x_app_from_env__mutmut_2: no tests
+    agentic_app.app.x_app_from_env__mutmut_3: no tests
+    agentic_app.app.x_app_from_env__mutmut_4: no tests
+    agentic_app.app.x_app_from_env__mutmut_5: no tests
+    agentic_app.app.x_app_from_env__mutmut_6: no tests
+    agentic_app.app.x_app_from_env__mutmut_7: no tests
+    agentic_app.app.x_app_from_env__mutmut_8: no tests
+    agentic_app.app.x_app_from_env__mutmut_9: no tests
+    agentic_app.app.x_app_from_env__mutmut_10: no tests
+    agentic_app.app.x_app_from_env__mutmut_11: no tests
+    agentic_app.app.x_app_from_env__mutmut_12: no tests
+    agentic_app.app.x_app_from_env__mutmut_13: no tests
+    agentic_app.app.x_app_from_env__mutmut_14: no tests
+    agentic_app.app.x_app_from_env__mutmut_15: no tests
+    agentic_app.app.x_app_from_env__mutmut_16: no tests
+    agentic_app.app.x_app_from_env__mutmut_17: no tests
+    agentic_app.app.x_app_from_env__mutmut_18: no tests
+    agentic_app.claims.store.x_connect__mutmut_3: survived
+    agentic_app.claims.store.x_connect__mutmut_5: survived
+    agentic_app.claims.store.x_connect__mutmut_6: survived
+    agentic_app.claims.store.x_connect__mutmut_9: survived
+    agentic_app.claims.store.x_connect__mutmut_10: survived
+    agentic_app.claims.store.x_add_claim__mutmut_7: survived
+    agentic_app.claims.store.x_add_claim__mutmut_8: survived
+    agentic_app.claims.store.x_get_claim__mutmut_7: survived
+    agentic_app.claims.store.x_get_claim__mutmut_8: survived
+    agentic_app.claims.store.x_list_claims__mutmut_7: survived
+    agentic_app.claims.store.x_list_claims__mutmut_8: survived
+    agentic_app.claims.policy.xǁ_Docǁsection__mutmut_2: survived
+    agentic_app.claims.policy.xǁ_Docǁtable__mutmut_6: survived
+    agentic_app.claims.policy.xǁ_Docǁtable__mutmut_8: survived
+    agentic_app.claims.policy.xǁ_Docǁtable__mutmut_11: survived
+    agentic_app.claims.policy.xǁ_Docǁtable__mutmut_18: survived
+    agentic_app.claims.policy.xǁ_Docǁtable__mutmut_20: survived
+    agentic_app.claims.policy.xǁ_Docǁtable__mutmut_28: survived
+    agentic_app.claims.policy.x__read_doc__mutmut_6: survived
+    agentic_app.claims.policy.x__read_doc__mutmut_8: survived
+    agentic_app.claims.policy.x__read_doc__mutmut_19: survived
+    agentic_app.claims.policy.x__read_doc__mutmut_24: survived
+    agentic_app.claims.policy.x_load_policy__mutmut_36: survived
+    agentic_app.claims.policy.x_load_policy__mutmut_42: survived
+    agentic_app.claims.rules.x__check_lines__mutmut_38: survived
+    agentic_app.claims.rules.x__check_lines__mutmut_39: survived
+    agentic_app.claims.rules.x__check_lines__mutmut_40: survived
+    agentic_app.claims.rules.x__check_lines__mutmut_75: survived
+    agentic_app.claims.rules.x__check_lines__mutmut_76: survived
+    agentic_app.claims.rules.x__apply_meals_limit__mutmut_33: survived
+    agentic_app.claims.rules.x__apply_meals_limit__mutmut_37: survived
+    agentic_app.claims.rules.x__apply_meals_limit__mutmut_40: survived
+    agentic_app.claims.rules.x__night_shares__mutmut_3: survived
+    agentic_app.claims.rules.x__apply_lodging_cap__mutmut_27: survived
+    agentic_app.claims.rules.x__apply_lodging_cap__mutmut_34: survived
+    agentic_app.claims.rules.x__apply_lodging_cap__mutmut_37: survived
+    agentic_app.claims.rules.x__apply_lodging_cap__mutmut_41: survived
+    agentic_app.claims.rules.x__apply_lodging_cap__mutmut_44: survived
+    agentic_app.claims.rules.x__sort_key__mutmut_3: survived
+    agentic_app.claims.rules.x_check_claim__mutmut_49: survived
+    agentic_app.claims.money.x_to_cents__mutmut_2: survived
+    agentic_app.claims.money.x_to_cents__mutmut_3: survived
+    agentic_app.claims.seed.x_load_seed_claims__mutmut_1: no tests
+    agentic_app.claims.seed.x_load_seed_claims__mutmut_2: no tests
+    agentic_app.claims.seed.x_load_seed_claims__mutmut_3: no tests
+    agentic_app.claims.seed.x_load_seed_claims__mutmut_4: no tests
+    agentic_app.claims.seed.x_load_seed_claims__mutmut_5: no tests
+    agentic_app.claims.seed.x_load_seed_claims__mutmut_6: no tests
+    agentic_app.claims.seed.x_load_seed_claims__mutmut_7: no tests
+    agentic_app.claims.seed.x_load_seed_claims__mutmut_8: no tests
+    agentic_app.claims.seed.x_load_seed_claims__mutmut_9: no tests
+    agentic_app.claims.seed.x_load_seed_claims__mutmut_10: no tests
+    agentic_app.claims.seed.x_main__mutmut_1: no tests
+    agentic_app.claims.seed.x_main__mutmut_2: no tests
+    agentic_app.claims.seed.x_main__mutmut_3: no tests
+    agentic_app.claims.seed.x_main__mutmut_4: no tests
+    agentic_app.claims.seed.x_main__mutmut_5: no tests
+    agentic_app.claims.seed.x_main__mutmut_6: no tests
+    agentic_app.claims.seed.x_main__mutmut_7: no tests
+    agentic_app.claims.seed.x_main__mutmut_8: no tests
+    agentic_app.claims.seed.x_main__mutmut_9: no tests
+    agentic_app.claims.seed.x_main__mutmut_10: no tests
+    agentic_app.claims.seed.x_main__mutmut_11: no tests
+    agentic_app.claims.seed.x_main__mutmut_12: no tests
+    agentic_app.claims.seed.x_main__mutmut_13: no tests
+    agentic_app.claims.seed.x_main__mutmut_14: no tests
+    agentic_app.claims.seed.x_main__mutmut_15: no tests
+    agentic_app.claims.seed.x_main__mutmut_16: no tests
+    agentic_app.claims.seed.x_main__mutmut_17: no tests
+    agentic_app.claims.seed.x_main__mutmut_18: no tests
+    agentic_app.claims.seed.x_main__mutmut_19: no tests
+    agentic_app.claims.seed.x_main__mutmut_20: no tests
+    agentic_app.claims.seed.x_main__mutmut_21: no tests
+    agentic_app.claims.seed.x_main__mutmut_22: no tests
+    agentic_app.claims.seed.x_main__mutmut_23: no tests
+    agentic_app.claims.seed.x_main__mutmut_24: no tests
+    agentic_app.claims.seed.x_main__mutmut_25: no tests
+    agentic_app.claims.seed.x_main__mutmut_26: no tests
+    agentic_app.claims.seed.x_main__mutmut_27: no tests
+    agentic_app.claims.seed.x_main__mutmut_28: no tests
+    agentic_app.claims.seed.x_main__mutmut_29: no tests
+    agentic_app.claims.seed.x_main__mutmut_30: no tests
+    agentic_app.claims.seed.x_main__mutmut_31: no tests
+    agentic_app.claims.seed.x_main__mutmut_32: no tests
+    agentic_app.claims.seed.x_main__mutmut_33: no tests
+    agentic_app.claims.seed.x_main__mutmut_34: no tests
+    agentic_app.claims.seed.x_main__mutmut_35: no tests
+    agentic_app.claims.seed.x_main__mutmut_36: no tests
+    agentic_app.claims.seed.x_main__mutmut_37: no tests
+    agentic_app.claims.seed.x_main__mutmut_38: no tests
+    agentic_app.claims.seed.x_main__mutmut_39: no tests
+    agentic_app.claims.seed.x_main__mutmut_40: no tests
+    agentic_app.claims.seed.x_main__mutmut_41: no tests
+    agentic_app.claims.seed.x_main__mutmut_42: no tests
+    agentic_app.claims.seed.x_main__mutmut_43: no tests
+    agentic_app.claims.seed.x_main__mutmut_44: no tests
+    agentic_app.claims.seed.x_main__mutmut_45: no tests
+    agentic_app.claims.seed.x_main__mutmut_46: no tests
+    agentic_app.claims.seed.x_main__mutmut_47: no tests
+    agentic_app.claims.seed.x_main__mutmut_48: no tests
+    agentic_app.claims.seed.x_main__mutmut_49: no tests
+    agentic_app.claims.seed.x_main__mutmut_50: no tests
+    agentic_app.claims.seed.x_main__mutmut_51: no tests
+    agentic_app.claims.seed.x_main__mutmut_52: no tests
+    agentic_app.claims.seed.x_main__mutmut_53: no tests
+    agentic_app.claims.seed.x_main__mutmut_54: no tests
+    agentic_app.claims.seed.x_main__mutmut_55: no tests
+    agentic_app.claims.seed.x_main__mutmut_56: no tests
+    agentic_app.claims.seed.x_main__mutmut_57: no tests
+    agentic_app.claims.seed.x_main__mutmut_58: no tests
+    agentic_app.claims.seed.x_main__mutmut_59: no tests
+    agentic_app.claims.seed.x_main__mutmut_60: no tests
+    agentic_app.claims.seed.x_main__mutmut_61: no tests

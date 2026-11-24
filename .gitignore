@@ -11,3 +11,4 @@ wheels/
 .env
 # Local claims database (001-claims-api)
 data/claims.db
+mutants/

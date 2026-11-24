@@ -21,6 +21,7 @@ build-backend = "uv_build"
 [dependency-groups]
 dev = [
     "httpx>=0.28.1",
+    "mutmut>=3.8.1",
     "pytest>=9.2.0",
     "pytest-cov>=7.1.0",
 ]
@@ -39,3 +40,9 @@ branch = true
 
 [tool.coverage.report]
 show_missing = true
+
+[tool.mutmut]
+paths_to_mutate = ["src/agentic_app/"]
+do_not_mutate = ["*/llm.py", "*/__init__.py"]
+also_copy = ["data/"]
+pytest_add_cli_args = ["--ignore=tests/claims/test_rules_purity.py", "--ignore=tests/test_package_import.py", "--ignore=tests/claims/test_app.py"]
