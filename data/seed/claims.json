@@ -1,0 +1,141 @@
+[
+  {
+    "employee_id": "E-001",
+    "trip": {"destination_city": "Berlin", "start_date": "2026-01-12", "end_date": "2026-01-14"},
+    "lines": [
+      {"date": "2026-01-12", "category": "meal", "merchant": "Cafe Mitte", "amount": "40.00", "currency": "USD", "receipt_attached": true},
+      {"date": "2026-01-13", "category": "meal", "merchant": "Brauhaus Nord", "amount": "30.00", "currency": "USD", "receipt_attached": true},
+      {"date": "2026-01-12", "category": "lodging", "merchant": "Hotel Spree", "amount": "340.00", "currency": "USD", "receipt_attached": true, "nights": 2},
+      {"date": "2026-01-14", "category": "transport", "merchant": "BVG U-Bahn", "amount": "20.00", "currency": "USD", "receipt_attached": false}
+    ],
+    "expected_rules": [],
+    "expected_total_usd": "580.00",
+    "expected_working": "Clean. Meals 40.00 + 30.00 on different days (each <= 75). Lodging 340.00 over 2 nights = 170.00/night <= Berlin cap 180. Transport 20.00 <= 25 needs no receipt. Lines 430.00. Per diem Berlin 3 days: 60x0.75 + 60 + 60x0.75 = 150.00. Total 580.00."
+  },
+  {
+    "employee_id": "E-001",
+    "trip": {"destination_city": "London", "start_date": "2026-01-20", "end_date": "2026-01-20"},
+    "lines": [
+      {"date": "2026-01-20", "category": "transport", "merchant": "Heathrow Express", "amount": "18.00", "currency": "GBP", "receipt_attached": false},
+      {"date": "2026-01-20", "category": "meal", "merchant": "Pret Holborn", "amount": "20.00", "currency": "GBP", "receipt_attached": true}
+    ],
+    "expected_rules": [],
+    "expected_total_usd": "100.76",
+    "expected_working": "Clean same-day trip. 18.00 GBP x 1.27 = 22.86 <= 25, no receipt needed. 20.00 GBP x 1.27 = 25.40, receipt attached. Lines 48.26. Per diem London same day: 70 x 0.75 = 52.50. Total 100.76."
+  },
+  {
+    "employee_id": "E-002",
+    "trip": {"destination_city": "Paris", "start_date": "2026-02-02", "end_date": "2026-02-05"},
+    "lines": [
+      {"date": "2026-02-02", "category": "lodging", "merchant": "Hotel Lumiere", "amount": "360.00", "currency": "EUR", "receipt_attached": true, "nights": 3},
+      {"date": "2026-02-03", "category": "meal", "merchant": "Le Petit Bistro", "amount": "40.00", "currency": "EUR", "receipt_attached": true},
+      {"date": "2026-02-03", "category": "meal", "merchant": "Cafe Flore", "amount": "35.00", "currency": "EUR", "receipt_attached": true},
+      {"date": "2026-02-04", "category": "meal", "merchant": "Boulangerie Paul", "amount": "20.00", "currency": "EUR", "receipt_attached": false}
+    ],
+    "expected_rules": ["MEALS_DAILY_LIMIT"],
+    "expected_total_usd": "642.90",
+    "expected_working": "Lodging 360.00 EUR x 1.08 = 388.80 over 3 nights = 129.60/night <= other-city cap 140. Meals 2026-02-03: 40.00 EUR = 43.20 and 35.00 EUR = 37.80, day 81.00 > 75; line order pays 43.20 then 31.80, excess 6.20. Meal 2026-02-04: 20.00 EUR = 21.60 <= 25 needs no receipt. Lines 388.80 + 43.20 + 31.80 + 21.60 = 485.40. Per diem Paris 4 days: 33.75 + 45 + 45 + 33.75 = 157.50. Total 642.90."
+  },
+  {
+    "employee_id": "E-002",
+    "trip": {"destination_city": "London", "start_date": "2026-02-16", "end_date": "2026-02-17"},
+    "lines": [
+      {"date": "2026-02-16", "category": "lodging", "merchant": "Thames Hotel", "amount": "200.00", "currency": "GBP", "receipt_attached": true},
+      {"date": "2026-02-17", "category": "transport", "merchant": "TfL Tube", "amount": "15.00", "currency": "GBP", "receipt_attached": false}
+    ],
+    "expected_rules": ["LODGING_NIGHTLY_CAP"],
+    "expected_total_usd": "344.05",
+    "expected_working": "Lodging 200.00 GBP x 1.27 = 254.00 for 1 night > London cap 220; pays 220.00, excess 34.00. Transport 15.00 GBP = 19.05 <= 25. Lines 239.05. Per diem London 2 days: 52.50 + 52.50 = 105.00. Total 344.05."
+  },
+  {
+    "employee_id": "E-002",
+    "trip": {"destination_city": "Berlin", "start_date": "2026-03-02", "end_date": "2026-03-05"},
+    "lines": [
+      {"date": "2026-03-02", "category": "lodging", "merchant": "Hotel Spree", "amount": "540.00", "currency": "EUR", "receipt_attached": true, "nights": 3},
+      {"date": "2026-03-03", "category": "meal", "merchant": "Currywurst 36", "amount": "25.00", "currency": "EUR", "receipt_attached": true}
+    ],
+    "expected_rules": ["LODGING_NIGHTLY_CAP"],
+    "expected_total_usd": "777.00",
+    "expected_working": "Lodging 540.00 EUR x 1.08 = 583.20 over 3 nights = 194.40/night > Berlin cap 180; pays 3 x 180 = 540.00, excess 3 x 14.40 = 43.20 (one violation per night). Meal 25.00 EUR = 27.00, receipt attached. Lines 567.00. Per diem Berlin 4 days: 45 + 60 + 60 + 45 = 210.00. Total 777.00."
+  },
+  {
+    "employee_id": "E-003",
+    "trip": {"destination_city": "Mumbai", "start_date": "2026-03-09", "end_date": "2026-03-10"},
+    "lines": [
+      {"date": "2026-03-09", "category": "transport", "merchant": "Airport Taxi Co", "amount": "2083.75", "currency": "INR", "receipt_attached": false},
+      {"date": "2026-03-09", "category": "other", "merchant": "SIM Card Kiosk", "amount": "25.00", "currency": "USD", "receipt_attached": false},
+      {"date": "2026-03-10", "category": "meal", "merchant": "Leopold Cafe", "amount": "1500.00", "currency": "INR", "receipt_attached": true}
+    ],
+    "expected_rules": ["RECEIPT_MISSING"],
+    "expected_total_usd": "110.50",
+    "expected_working": "2083.75 INR x 0.012 = 25.005 -> 25.01 > 25 without receipt: not reimbursed. 25.00 USD is not over 25, no receipt needed. 1500.00 INR = 18.00. Lines 0.00 + 25.00 + 18.00 = 43.00. Per diem other city 2 days: 33.75 + 33.75 = 67.50. Total 110.50."
+  },
+  {
+    "employee_id": "E-003",
+    "trip": {"destination_city": "Tokyo", "start_date": "2026-03-16", "end_date": "2026-03-17"},
+    "lines": [
+      {"date": "2026-03-16", "category": "meal", "merchant": "Ramen Ichiban", "amount": "3000.00", "currency": "JPY", "receipt_attached": true},
+      {"date": "2026-03-17", "category": "transport", "merchant": "Airport Limousine Bus", "amount": "20.00", "currency": "USD", "receipt_attached": false}
+    ],
+    "expected_rules": ["CURRENCY_UNSUPPORTED"],
+    "expected_total_usd": "87.50",
+    "expected_working": "JPY is not in POL-CURRENCY section 2: line not reimbursed. Transport 20.00 USD. Lines 20.00. Per diem other city 2 days: 67.50. Total 87.50."
+  },
+  {
+    "employee_id": "E-003",
+    "trip": {"destination_city": "Berlin", "start_date": "2026-03-23", "end_date": "2026-03-24"},
+    "lines": [
+      {"date": "2026-03-23", "category": "transport", "merchant": "Taxi Berlin", "amount": "12.00", "currency": "EUR", "receipt_attached": false},
+      {"date": "2026-03-23", "category": "transport", "merchant": "Taxi Berlin", "amount": "12.00", "currency": "EUR", "receipt_attached": false},
+      {"date": "2026-03-24", "category": "meal", "merchant": "Markthalle Neun", "amount": "30.00", "currency": "EUR", "receipt_attached": true}
+    ],
+    "expected_rules": ["DUPLICATE"],
+    "expected_total_usd": "135.36",
+    "expected_working": "Line 2 repeats line 1 (same date, amount, currency, merchant): duplicate, not reimbursed. 12.00 EUR x 1.08 = 12.96. Meal 30.00 EUR = 32.40. Lines 12.96 + 0.00 + 32.40 = 45.36. Per diem Berlin 2 days: 45 + 45 = 90.00. Total 135.36."
+  },
+  {
+    "employee_id": "E-004",
+    "trip": {"destination_city": "Paris", "start_date": "2026-04-06", "end_date": "2026-04-07"},
+    "lines": [
+      {"date": "2026-04-06", "category": "transport", "merchant": "Taxi G7", "amount": "22.00", "currency": "EUR", "receipt_attached": false},
+      {"date": "2026-04-07", "category": "meal", "merchant": "Brasserie Lipp", "amount": "30.00", "currency": "EUR", "receipt_attached": true}
+    ],
+    "expected_rules": [],
+    "expected_total_usd": "123.66",
+    "expected_working": "Clean; holds the original of the taxi line repeated in the next claim. 22.00 EUR x 1.08 = 23.76 <= 25. Meal 30.00 EUR = 32.40. Lines 56.16. Per diem other city 2 days: 67.50. Total 123.66."
+  },
+  {
+    "employee_id": "E-004",
+    "trip": {"destination_city": "Paris", "start_date": "2026-04-06", "end_date": "2026-04-07"},
+    "lines": [
+      {"date": "2026-04-06", "category": "transport", "merchant": " taxi g7 ", "amount": "22.00", "currency": "EUR", "receipt_attached": false},
+      {"date": "2026-04-07", "category": "meal", "merchant": "Cafe de la Paix", "amount": "20.00", "currency": "EUR", "receipt_attached": false}
+    ],
+    "expected_rules": ["DUPLICATE"],
+    "expected_total_usd": "89.10",
+    "expected_working": "Line 1 matches the previous claim's line 1 (merchant differs only in case and spaces): duplicate, not reimbursed. Meal 20.00 EUR = 21.60 <= 25. Lines 21.60. Per diem other city 2 days: 67.50. Total 89.10."
+  },
+  {
+    "employee_id": "E-004",
+    "trip": {"destination_city": "London", "start_date": "2026-04-20", "end_date": "2026-04-21"},
+    "lines": [
+      {"date": "2026-04-20", "category": "meal", "merchant": "Dishoom", "amount": "50.00", "currency": "GBP", "receipt_attached": false},
+      {"date": "2026-04-20", "category": "meal", "merchant": "Borough Market", "amount": "45.00", "currency": "GBP", "receipt_attached": true}
+    ],
+    "expected_rules": ["RECEIPT_MISSING"],
+    "expected_total_usd": "162.15",
+    "expected_working": "Meal 50.00 GBP x 1.27 = 63.50 > 25 without receipt: not reimbursed, and counts 0 toward the meal limit. Meal 45.00 GBP = 57.15 <= 75: paid in full, no meals violation. Lines 57.15. Per diem London 2 days: 105.00. Total 162.15."
+  },
+  {
+    "employee_id": "E-001",
+    "trip": {"destination_city": "Madrid", "start_date": "2026-05-04", "end_date": "2026-05-06"},
+    "lines": [
+      {"date": "2026-05-04", "category": "meal", "merchant": "Casa Lucio", "amount": "50.00", "currency": "USD", "receipt_attached": true},
+      {"date": "2026-05-04", "category": "meal", "merchant": "Mercado San Miguel", "amount": "25.00", "currency": "USD", "receipt_attached": false},
+      {"date": "2026-05-04", "category": "lodging", "merchant": "Hotel Gran Via", "amount": "140.00", "currency": "USD", "receipt_attached": true}
+    ],
+    "expected_rules": [],
+    "expected_total_usd": "327.50",
+    "expected_working": "Clean boundaries. Meals on 2026-05-04 total exactly 75.00 (limit, no violation); the 25.00 line needs no receipt. Lodging exactly 140.00 = other-city cap. Lines 215.00. Per diem other city 3 days: 33.75 + 45 + 33.75 = 112.50. Total 327.50."
+  }
+]

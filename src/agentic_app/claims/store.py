@@ -38,7 +38,9 @@ _LINE_COLUMNS = "line_no, date, category, merchant, amount, currency, receipt_at
 
 
 def connect(db_path: Path) -> sqlite3.Connection:
-    conn = sqlite3.connect(db_path)
+    # One connection per request, never shared; FastAPI may open and use it on different
+    # threadpool threads, so the same-thread check is turned off.
+    conn = sqlite3.connect(db_path, check_same_thread=False)
     conn.execute("PRAGMA foreign_keys = ON")
     return conn
 

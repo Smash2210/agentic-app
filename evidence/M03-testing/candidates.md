@@ -2,3 +2,4 @@
 - employee_id not trimmed: ' E-001 ' bypasses cross-claim duplicate detection (spec gap)
 - amount '1e2' accepted and stored/echoed as '1E+2'
 - R-10 lodging split: 1.00 USD over 6 nights gives last night 0.15 (< other nights)
+- R-10 lodging split can go negative: 0.03 USD over 5 nights -> last night -0.01
