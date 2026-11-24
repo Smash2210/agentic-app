@@ -111,10 +111,13 @@ class _Usage:
     def __init__(self) -> None:
         self.calls = self.prompt = self.cached = self.thoughts = self.output = 0
         self.ms = 0
+        self.models: list[str] = []  # who actually answered, in order (fallbacks included)
 
     def add(self, response: types.GenerateContentResponse, ms: int) -> None:
         u = response.usage_metadata
         self.calls += 1
+        if response.model_version and response.model_version not in self.models:
+            self.models.append(response.model_version)
         self.ms += ms
         if u is not None:
             self.prompt += u.prompt_token_count or 0
@@ -124,7 +127,7 @@ class _Usage:
 
     def model(self) -> ModelUsage:
         return ModelUsage(
-            model=llm.model_name(), model_calls=self.calls, prompt_tokens=self.prompt,
+            model=", ".join(self.models) or llm.model_name(), model_calls=self.calls, prompt_tokens=self.prompt,
             cached_tokens=self.cached, thoughts_tokens=self.thoughts, output_tokens=self.output,
             latency_ms=self.ms,
         )
@@ -132,7 +135,8 @@ class _Usage:
 
 def _call(contents: list, config: types.GenerateContentConfig, usage: _Usage):
     start = time.monotonic()
-    response = llm.generate_content(contents, config)
+    # Stay on the model that already answered in this conversation (fallbacks are slow to reach).
+    response = llm.generate_content(contents, config, prefer=usage.models[-1] if usage.models else None)
     usage.add(response, int((time.monotonic() - start) * 1000))
     return response
 

@@ -366,7 +366,9 @@ class Flag(BaseModel):
 
 
 class ModelUsage(BaseModel):
-    model: Annotated[str, Field(description="Model used.")]
+    model: Annotated[str, Field(description=(
+        "Model(s) that answered, comma-separated if a fallback model was used."
+    ))]
     model_calls: Annotated[int, Field(description="Model calls made for this request.")]
     prompt_tokens: Annotated[int, Field(description="Input tokens, summed over calls.")]
     cached_tokens: Annotated[int, Field(description="Input tokens served from the model's cache.")]

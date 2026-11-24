@@ -62,7 +62,7 @@ class FakeModels:
         self.script, self.calls = list(script), []
 
     def generate_content(self, model, contents, config):
-        self.calls.append({"contents": list(contents), "config": config})  # snapshot: the list grows
+        self.calls.append({"model": model, "contents": list(contents), "config": config})  # snapshot
         item = self.script.pop(0)
         if isinstance(item, Exception):
             raise item
@@ -222,8 +222,24 @@ def test_temporary_errors_are_retried(fake):
 
 
 def test_still_unavailable_after_retries_raises(fake):
-    fake(*[api_error(503)] * 4)
+    fake(*[api_error(503)] * 3)
     with pytest.raises(llm.ModelUnavailable):
+        adjudicate(request(), [], POLICY)
+
+
+def test_falls_back_to_the_next_model_when_one_stays_unavailable(fake, monkeypatch):
+    monkeypatch.setenv("GEMINI_FALLBACK_MODELS", "backup-model, fake-model")
+    models = fake(*[api_error(503)] * 3, tool_call(TAXIS), DONE, answer())
+    result = adjudicate(request(), [], POLICY)
+
+    assert [c["model"] for c in models.calls] == ["fake-model"] * 3 + ["backup-model"] * 3
+    assert result.decision is Decision.APPROVE and result.usage.model == "backup-model"
+
+
+def test_every_model_unavailable_names_them_all(fake, monkeypatch):
+    monkeypatch.setenv("GEMINI_FALLBACK_MODELS", "backup-model")
+    fake(*[api_error(503)] * 3, *[api_error(429)] * 3)
+    with pytest.raises(llm.ModelUnavailable, match="fake-model.*backup-model"):
         adjudicate(request(), [], POLICY)
 
 
@@ -268,7 +284,7 @@ def test_post_adjudicate_uses_stored_claims_for_duplicates(fake, client):
 
 
 def test_post_adjudicate_503_when_the_model_is_unavailable(fake, client):
-    fake(*[api_error(503)] * 4)
+    fake(*[api_error(503)] * 3)
     response = client.post("/adjudicate", json=body())
     assert response.status_code == 503 and "unavailable" in response.json()["detail"]
 

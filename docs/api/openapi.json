@@ -541,7 +541,7 @@
             "type": "integer"
           },
           "model": {
-            "description": "Model used.",
+            "description": "Model(s) that answered, comma-separated if a fallback model was used.",
             "title": "Model",
             "type": "string"
           },

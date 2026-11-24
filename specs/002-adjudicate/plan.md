@@ -33,9 +33,13 @@ and measured over repeated runs for the evidence.
 
 ## Resilience
 
-`llm.generate_content()` retries 429/500/503 with backoff (5, 10, 20 s), because the free-tier model
-often answers 503 under load. After that it raises `ModelUnavailable`, and the API answers 503
-(FR-210). Tool timeouts and fallbacks are M09.
+`llm.generate_content()` retries 429/500/503 with backoff (5, 10 s: 3 tries per model), because
+free-tier models often answer 503 ("high demand"). It then moves on to the next model in
+`GEMINI_FALLBACK_MODELS`, a comma-separated list after `GEMINI_MODEL`. Within one adjudication, later
+calls go to the model that already answered first (`prefer=`), so a busy primary is not retried on
+every call. If every model fails, it raises `ModelUnavailable`, and the API answers 503 (FR-210).
+On 2026-11-25 a probe of the free-tier list found `gemini-3.5-flash-lite`, `gemini-3.5-flash` and
+`gemini-3.6-flash` answering, and several others at 503/429. Tool timeouts are M09.
 
 ## Interfaces
 

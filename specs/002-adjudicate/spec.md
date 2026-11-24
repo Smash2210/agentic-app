@@ -49,8 +49,10 @@ decision. With the model replaced by a fake, every branch of the decision can be
 - **FR-208** The reader's answer must match a fixed structure; an answer that does not is retried
   once with the reason, then treated as invalid (FR-207). The request never fails because of it.
 - **FR-209** Nothing is stored. This is a preview; storing stays `POST /claims` (spec 001).
-- **FR-210** If the model service is unavailable after retries, the request fails with a clear
-  "service unavailable" error, not a decision.
+- **FR-210** Temporary model errors are retried, then the next configured fallback model is tried
+  (one conversation stays on the model that answered). If every configured model is unavailable, the
+  request fails with a clear "service unavailable" error, not a decision. The result names the
+  model(s) that answered. (Amended 2026-11-25: the free-tier primary model was often overloaded.)
 - **FR-211** The result reports model usage: calls made, tokens, tokens served from cache, reasoning
   tokens, time taken.
 
