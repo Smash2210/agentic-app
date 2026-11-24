@@ -13,3 +13,4 @@ wheels/
 data/claims.db
 mutants/
 .hypothesis/
+.coverage
