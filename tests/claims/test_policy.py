@@ -40,7 +40,7 @@ def test_currency_rates(loaded):  # POL-CURRENCY §2
 
 
 def test_meals_daily_limit(loaded):  # POL-MEALS §1
-    assert loaded.meals_daily_limit_usd == Decimal("75")
+    assert loaded.meals_daily_limit_usd == Decimal("100")
 
 
 def test_lodging_caps(loaded):  # POL-LODGING §1
@@ -143,7 +143,7 @@ def test_missing_default_city_row(policy_copy):
 
 
 def test_bold_value_missing(policy_copy):
-    _edit(policy_copy / "meals.md", "**75 USD per calendar day**", "75 USD per calendar day")
+    _edit(policy_copy / "meals.md", "**100 USD per calendar day**", "100 USD per calendar day")
     with pytest.raises(PolicyError, match=r"meals.md §1"):
         load_policy(policy_copy)
 

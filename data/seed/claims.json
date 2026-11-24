@@ -28,13 +28,13 @@
     "trip": {"destination_city": "Paris", "start_date": "2026-02-02", "end_date": "2026-02-05"},
     "lines": [
       {"date": "2026-02-02", "category": "lodging", "merchant": "Hotel Lumiere", "amount": "360.00", "currency": "EUR", "receipt_attached": true, "nights": 3},
-      {"date": "2026-02-03", "category": "meal", "merchant": "Le Petit Bistro", "amount": "40.00", "currency": "EUR", "receipt_attached": true},
-      {"date": "2026-02-03", "category": "meal", "merchant": "Cafe Flore", "amount": "35.00", "currency": "EUR", "receipt_attached": true},
+      {"date": "2026-02-03", "category": "meal", "merchant": "Le Petit Bistro", "amount": "60.00", "currency": "EUR", "receipt_attached": true},
+      {"date": "2026-02-03", "category": "meal", "merchant": "Cafe Flore", "amount": "40.00", "currency": "EUR", "receipt_attached": true},
       {"date": "2026-02-04", "category": "meal", "merchant": "Boulangerie Paul", "amount": "20.00", "currency": "EUR", "receipt_attached": false}
     ],
     "expected_rules": ["MEALS_DAILY_LIMIT"],
-    "expected_total_usd": "642.90",
-    "expected_working": "Lodging 360.00 EUR x 1.08 = 388.80 over 3 nights = 129.60/night <= other-city cap 140. Meals 2026-02-03: 40.00 EUR = 43.20 and 35.00 EUR = 37.80, day 81.00 > 75; line order pays 43.20 then 31.80, excess 6.00. Meal 2026-02-04: 20.00 EUR = 21.60 <= 25 needs no receipt. Lines 388.80 + 43.20 + 31.80 + 21.60 = 485.40. Per diem Paris 4 days: 33.75 + 45 + 45 + 33.75 = 157.50. Total 642.90."
+    "expected_total_usd": "667.90",
+    "expected_working": "Lodging 360.00 EUR x 1.08 = 388.80 over 3 nights = 129.60/night <= other-city cap 140. Meals 2026-02-03: 60.00 EUR = 64.80 and 40.00 EUR = 43.20, day 108.00 > 100; line order pays 64.80 then 35.20, excess 8.00. Meal 2026-02-04: 20.00 EUR = 21.60 <= 25 needs no receipt. Lines 388.80 + 64.80 + 35.20 + 21.60 = 510.40. Per diem Paris 4 days: 33.75 + 45 + 45 + 33.75 = 157.50. Total 667.90."
   },
   {
     "employee_id": "E-002",
@@ -124,18 +124,18 @@
     ],
     "expected_rules": ["RECEIPT_MISSING"],
     "expected_total_usd": "162.15",
-    "expected_working": "Meal 50.00 GBP x 1.27 = 63.50 > 25 without receipt: not reimbursed, and counts 0 toward the meal limit. Meal 45.00 GBP = 57.15 <= 75: paid in full, no meals violation. Lines 57.15. Per diem London 2 days: 105.00. Total 162.15."
+    "expected_working": "Meal 50.00 GBP x 1.27 = 63.50 > 25 without receipt: not reimbursed, and counts 0 toward the meal limit. Meal 45.00 GBP = 57.15 <= 100: paid in full, no meals violation. Lines 57.15. Per diem London 2 days: 105.00. Total 162.15."
   },
   {
     "employee_id": "E-001",
     "trip": {"destination_city": "Madrid", "start_date": "2026-05-04", "end_date": "2026-05-06"},
     "lines": [
-      {"date": "2026-05-04", "category": "meal", "merchant": "Casa Lucio", "amount": "50.00", "currency": "USD", "receipt_attached": true},
+      {"date": "2026-05-04", "category": "meal", "merchant": "Casa Lucio", "amount": "75.00", "currency": "USD", "receipt_attached": true},
       {"date": "2026-05-04", "category": "meal", "merchant": "Mercado San Miguel", "amount": "25.00", "currency": "USD", "receipt_attached": false},
       {"date": "2026-05-04", "category": "lodging", "merchant": "Hotel Gran Via", "amount": "140.00", "currency": "USD", "receipt_attached": true}
     ],
     "expected_rules": [],
-    "expected_total_usd": "327.50",
-    "expected_working": "Clean boundaries. Meals on 2026-05-04 total exactly 75.00 (limit, no violation); the 25.00 line needs no receipt. Lodging exactly 140.00 = other-city cap. Lines 215.00. Per diem other city 3 days: 33.75 + 45 + 33.75 = 112.50. Total 327.50."
+    "expected_total_usd": "352.50",
+    "expected_working": "Clean boundaries. Meals on 2026-05-04 total exactly 100.00 (limit, no violation); the 25.00 line needs no receipt. Lodging exactly 140.00 = other-city cap. Lines 240.00. Per diem other city 3 days: 33.75 + 45 + 33.75 = 112.50. Total 352.50."
   }
 ]

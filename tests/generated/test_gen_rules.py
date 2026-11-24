@@ -1,7 +1,7 @@
 """Generated edge-case and adversarial tests for agentic_app.claims.rules.check_claim.
 
 Every expected value is worked out by hand from specs/001-claims-api/spec.md and
-data/policies/*.md (rates: USD 1.00, EUR 1.08, GBP 1.27, INR 0.012; meals 75/day;
+data/policies/*.md (rates: USD 1.00, EUR 1.08, GBP 1.27, INR 0.012; meals 100/day;
 lodging caps Berlin 180, London 220, other 140; per diem Berlin 60, London 70, other 45,
 travel days 75%; receipts over 25 USD). Nothing here was derived by running the code.
 """
@@ -101,12 +101,12 @@ def test_each_line_converted_separately_three_tiny_gbp_lines():
 
 
 def test_exponent_notation_amount_is_treated_as_its_value():
-    """'Odd but valid input' 1e2: Decimal('1E+2') is 100 -> claimed 100.00 USD. As a meal it is
-    over the 75.00 daily limit (POL-MEALS §1, §3): 75.00 paid, 25.00 excess."""
-    result = run(claim([line(1, D1, "meal", amount=D("1E+2"))]))
+    """'Odd but valid input' 1.25e2: Decimal('1.25E+2') is 125 -> claimed 125.00 USD. As a meal it
+    is over the 100.00 daily limit (POL-MEALS §1, §3): 100.00 paid, 25.00 excess."""
+    result = run(claim([line(1, D1, "meal", amount=D("1.25E+2"))]))
     lr = result.lines[0]
-    assert lr.claimed_usd == D("100.00")
-    assert lr.reimbursable_usd == D("75.00")
+    assert lr.claimed_usd == D("125.00")
+    assert lr.reimbursable_usd == D("100.00")
     assert lr.rejected_usd == D("25.00")
     [v] = result.violations
     assert v.rule_id == "MEALS_DAILY_LIMIT" and v.excess_usd == D("25.00")
@@ -164,8 +164,8 @@ def test_missing_receipt_is_not_flagged_for_review():
 
 
 @pytest.mark.parametrize(("amount", "usd", "excess"), [
-    ("69.44", "75.00", None),   # 69.44 x 1.08 = 74.9952 -> 75.00, exactly at limit
-    ("69.45", "75.01", "0.01"),  # 69.45 x 1.08 = 75.006 -> 75.01, one cent over
+    ("92.59", "100.00", None),   # 92.59 x 1.08 = 99.9972 -> 100.00, exactly at limit
+    ("92.60", "100.01", "0.01"),  # 92.60 x 1.08 = 100.008 -> 100.01, one cent over
 ])
 def test_meal_limit_at_converted_eur_boundary(amount, usd, excess):
     """FR-016 / POL-CURRENCY §4 / SC-004: limit checked on converted, rounded USD."""
@@ -174,21 +174,21 @@ def test_meal_limit_at_converted_eur_boundary(amount, usd, excess):
     assert lr.claimed_usd == D(usd)
     if excess is None:
         assert result.violations == []
-        assert lr.reimbursable_usd == D("75.00")
+        assert lr.reimbursable_usd == D("100.00")
     else:
         [v] = result.violations
         assert v.rule_id == "MEALS_DAILY_LIMIT"
         assert v.excess_usd == D(excess)
-        assert lr.reimbursable_usd == D("75.00")
+        assert lr.reimbursable_usd == D("100.00")
 
 
 def test_line_exactly_filling_remaining_is_not_named_but_later_line_is():
-    """FR-016 + clarification Q2: 50 + 25 reaches 75 exactly; line 3 (10.00) is fully rejected.
+    """FR-016 + clarification Q2: 60 + 40 reaches 100 exactly; line 3 (10.00) is fully rejected.
     Only line 3 lost money, so the violation's excess is 10.00 for day D1."""
-    lines = [line(1, D1, "meal", "50.00"), line(2, D1, "meal", "25.00"),
+    lines = [line(1, D1, "meal", "60.00"), line(2, D1, "meal", "40.00"),
              line(3, D1, "meal", "10.00")]
     result = run(claim(lines))
-    assert [lr.reimbursable_usd for lr in result.lines] == [D("50.00"), D("25.00"), D("0.00")]
+    assert [lr.reimbursable_usd for lr in result.lines] == [D("60.00"), D("40.00"), D("0.00")]
     [v] = result.violations
     assert v.date == D1
     assert v.excess_usd == D("10.00")
@@ -196,12 +196,12 @@ def test_line_exactly_filling_remaining_is_not_named_but_later_line_is():
 
 
 def test_meal_lines_out_of_date_order_are_grouped_per_day_in_line_order():
-    """FR-016: per calendar day, paid in line order. Day D2: line 1 60.00 + line 3 20.00 = 80
-    -> line 3 paid 15.00, excess 5.00. Day D1: line 2 60.00 alone, fine."""
-    lines = [line(1, D2, "meal", "60.00"), line(2, D1, "meal", "60.00"),
-             line(3, D2, "meal", "20.00")]
+    """FR-016: per calendar day, paid in line order. Day D2: line 1 80.00 + line 3 25.00 = 105
+    -> line 3 paid 20.00, excess 5.00. Day D1: line 2 80.00 alone, fine."""
+    lines = [line(1, D2, "meal", "80.00"), line(2, D1, "meal", "80.00"),
+             line(3, D2, "meal", "25.00")]
     result = run(claim(lines))
-    assert [lr.reimbursable_usd for lr in result.lines] == [D("60.00"), D("60.00"), D("15.00")]
+    assert [lr.reimbursable_usd for lr in result.lines] == [D("80.00"), D("80.00"), D("20.00")]
     [v] = result.violations
     assert (v.date, v.excess_usd, v.line_nos) == (D2, D("5.00"), [3])
 
@@ -219,11 +219,11 @@ def test_meal_days_across_month_end_are_separate():
 
 def test_unsupported_currency_meal_does_not_use_daily_limit():
     """FR-013 + edge case: an unsupported-currency line is excluded from the meals rule and counts
-    0 USD. A 75.00 USD meal on the same day is paid in full; only CURRENCY_UNSUPPORTED raised."""
-    lines = [line(1, D1, "meal", "10000.00", currency="JPY"), line(2, D1, "meal", "75.00")]
+    0 USD. A 100.00 USD meal on the same day is paid in full; only CURRENCY_UNSUPPORTED raised."""
+    lines = [line(1, D1, "meal", "10000.00", currency="JPY"), line(2, D1, "meal", "100.00")]
     result = run(claim(lines))
     assert rules_of(result) == ["CURRENCY_UNSUPPORTED"]
-    assert result.lines[1].reimbursable_usd == D("75.00")
+    assert result.lines[1].reimbursable_usd == D("100.00")
     lr = result.lines[0]
     assert (lr.claimed_usd, lr.reimbursable_usd, lr.rejected_usd) == (None, D("0.00"), None)
 
@@ -500,8 +500,8 @@ def test_property_outright_rejected_pay_zero_and_flag_only_duplicates(c):
 @SETTINGS
 @given(claims())
 def test_property_meals_per_day_never_exceed_limit_and_fill_it_exactly(c):
-    """FR-016 / POL-MEALS §1, §3: per day, paid meals <= 75.00; if eligible (not outright
-    rejected) claimed meals exceed 75.00, exactly 75.00 is paid, else everything is paid."""
+    """FR-016 / POL-MEALS §1, §3: per day, paid meals <= 100.00; if eligible (not outright
+    rejected) claimed meals exceed 100.00, exactly 100.00 is paid, else everything is paid."""
     result = run(c)
     out = outright_lines(result)
     days = {ln.date for ln in c.lines if ln.category == "meal"}
@@ -510,11 +510,11 @@ def test_property_meals_per_day_never_exceed_limit_and_fill_it_exactly(c):
                     if ln.category == "meal" and ln.date == day and ln.line_no not in out]
         claimed = sum((lr.claimed_usd for _, lr in eligible), D(0))
         paid = sum((lr.reimbursable_usd for _, lr in eligible), D(0))
-        assert paid == min(claimed, D("75.00"))
+        assert paid == min(claimed, D("100.00"))
         over = [v for v in of_rule(result, "MEALS_DAILY_LIMIT") if v.date == day]
-        assert len(over) == (1 if claimed > D("75.00") else 0)
+        assert len(over) == (1 if claimed > D("100.00") else 0)
         if over:
-            assert over[0].excess_usd == claimed - D("75.00")
+            assert over[0].excess_usd == claimed - D("100.00")
 
 
 @SETTINGS

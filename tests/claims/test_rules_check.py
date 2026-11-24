@@ -68,12 +68,12 @@ def test_messages_are_plain_and_name_their_amounts(make_claim, check):
 def test_violations_are_sorted_by_rule_then_date_then_line(make_claim, check):
     result = check(make_claim(
         {"amount": "50.00", "merchant": "Cafe"},                                 # 1
-        {"amount": "40.00", "merchant": "Bistro"},                               # 2: meals day 10
+        {"amount": "60.00", "merchant": "Bistro"},                               # 2: meals day 10
         {"category": "transport", "amount": "900.00", "currency": "JPY"},        # 3: currency
         {"amount": "50.00", "merchant": "Cafe"},                                 # 4: duplicate of 1
         {"category": "transport", "amount": "30.00", "receipt_attached": False},  # 5: receipt
         {"category": "lodging", "amount": "200.00", "merchant": "Hotel"},        # 6: lodging day 10
-        {"date": "2026-03-11", "amount": "80.00", "merchant": "Grill"},          # 7: meals day 11
+        {"date": "2026-03-11", "amount": "110.00", "merchant": "Grill"},         # 7: meals day 11
     ))
 
     assert [(v.rule_id, v.date, v.line_nos) for v in result.violations] == [
