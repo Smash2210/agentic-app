@@ -7,7 +7,9 @@ validates each verdict against a schema, writes review-verdict.md, and exits non
 
 Exit codes: 0 pass, 1 blocked by the review, 2 the review itself failed (fail closed).
 """
+import time
 
+from google.genai import errors
 import argparse
 import os
 import subprocess
@@ -80,6 +82,16 @@ def build_context(base: str) -> str:
     parts += [f"## {p}\n{read(p)}" for p in CONTEXT_FILES + specs]
     return "\n\n".join(parts)
 
+def generate_with_retry(model: str, contents: str, config: types.GenerateContentConfig):
+    """Retry temporary API errors (rate limit, overload) with backoff; anything else fails at once."""
+    for attempt in range(4):  # waits 5, 10, 20 s between tries (35 s worst case)
+        try:
+            return get_client().models.generate_content(model=model, contents=contents, config=config)
+        except errors.APIError as exc:
+            if exc.code not in (429, 500, 503) or attempt == 3:
+                raise
+            time.sleep(5 * 2**attempt)
+
 
 def review(name: str, context: str) -> Verdict:
     model = os.environ.get("GEMINI_MODEL")
@@ -97,9 +109,7 @@ def review(name: str, context: str) -> Verdict:
         contents = context if error is None else (
             f"{context}\n\nYour previous answer was invalid: {error}\nAnswer again."
         )
-        response = get_client().models.generate_content(
-            model=model, contents=contents, config=config
-        )
+        response = generate_with_retry(model, contents, config)
         try:
             return Verdict.model_validate_json(response.text or "")
         except ValidationError as exc:
