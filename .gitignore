@@ -14,3 +14,4 @@ data/claims.db
 mutants/
 .hypothesis/
 .coverage
+review-verdict.md
