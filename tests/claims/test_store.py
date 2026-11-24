@@ -114,3 +114,30 @@ def test_failed_insert_stores_nothing(conn, monkeypatch):
 
     assert claim_count(conn) == 0
     assert conn.execute("SELECT COUNT(*) FROM expense_lines").fetchone()[0] == 0
+
+
+# --- list_claims (User Story 3) -----------------------------------------------------------------
+
+
+def test_list_claims_in_submission_order(conn):
+    first = store.add_claim(conn, claim_in("E-001", merchant="First"))
+    store.add_claim(conn, claim_in("E-002", merchant="Other employee"))
+    second = store.add_claim(conn, claim_in("E-001", merchant="Second"))
+
+    claims = store.list_claims(conn, "E-001")
+
+    assert [claim.id for claim in claims] == [first.id, second.id]
+    assert claims == [first, second]
+
+
+def test_list_claims_excludes_other_employees(conn):
+    store.add_claim(conn, claim_in("E-001"))
+    other = store.add_claim(conn, claim_in("E-002"))
+
+    assert store.list_claims(conn, "E-002") == [other]
+
+
+def test_list_claims_for_unknown_employee_is_empty(conn):
+    store.add_claim(conn, claim_in("E-001"))
+
+    assert store.list_claims(conn, "E-999") == []

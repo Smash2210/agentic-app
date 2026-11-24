@@ -52,3 +52,14 @@ def submit(claim_in: ClaimIn, conn: Conn) -> Claim:
     reaches here: FastAPI answers 422 listing each error (research R-06)."""
     return store.add_claim(conn, claim_in)
 
+
+@router.get("/claims/{claim_id}", response_model=Claim)
+def get_one(claim_id: int, conn: Conn) -> Claim:
+    """One stored claim (User Story 3)."""
+    return _claim_or_404(conn, claim_id)
+
+
+@router.get("/claims", response_model=list[Claim])
+def list_for_employee(employee_id: str, conn: Conn) -> list[Claim]:
+    """An employee's claims in submission order; [] if none (User Story 3)."""
+    return store.list_claims(conn, employee_id)

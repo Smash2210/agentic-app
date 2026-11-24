@@ -135,3 +135,11 @@ def prior_lines(
         )
         for claim_id, line_no, line_date, amount, currency, merchant in rows
     ]
+
+
+def list_claims(conn: sqlite3.Connection, employee_id: str) -> list[Claim]:
+    """An employee's claims in submission order (ascending ID)."""
+    ids = conn.execute(
+        "SELECT id FROM claims WHERE employee_id = ? ORDER BY id", (employee_id,)
+    ).fetchall()
+    return [get_claim(conn, claim_id) for (claim_id,) in ids]

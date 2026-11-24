@@ -144,13 +144,13 @@ stored.
 
 ### Tests for User Story 3 (write first, see them fail)
 
-- [ ] T036 [P] [US3] Add `list_claims` tests to tests/claims/test_store.py: an employee's claims come back in ascending ID order; another employee's claims are excluded; an unknown employee gives `[]`
-- [ ] T037 [P] [US3] View endpoint tests in tests/claims/test_api_view.py: `GET /claims/{id}` 200 with the stored claim and 404 `{"detail": "Claim 99 not found"}`; `GET /claims?employee_id=E-001` lists three claims in submission order; unknown employee → 200 `[]`; missing `employee_id` → 422 (spec FR-004, FR-005)
+- [X] T036 [P] [US3] Add `list_claims` tests to tests/claims/test_store.py: an employee's claims come back in ascending ID order; another employee's claims are excluded; an unknown employee gives `[]`
+- [X] T037 [P] [US3] View endpoint tests in tests/claims/test_api_view.py: `GET /claims/{id}` 200 with the stored claim and 404 `{"detail": "Claim 99 not found"}`; `GET /claims?employee_id=E-001` lists three claims in submission order; unknown employee → 200 `[]`; missing `employee_id` → 422 (spec FR-004, FR-005)
 
 ### Implementation for User Story 3
 
-- [ ] T038 [US3] Implement `list_claims(conn, employee_id) -> list[Claim]` in src/agentic_app/claims/store.py so T036 passes
-- [ ] T039 [US3] Add `GET /claims/{claim_id}` and `GET /claims?employee_id=` to src/agentic_app/claims/api.py so T037 passes
+- [X] T038 [US3] Implement `list_claims(conn, employee_id) -> list[Claim]` in src/agentic_app/claims/store.py so T036 passes
+- [X] T039 [US3] Add `GET /claims/{claim_id}` and `GET /claims?employee_id=` to src/agentic_app/claims/api.py so T037 passes
 
 **Checkpoint**: All three stories work; `uv run pytest` green; commit "feat(001): US3 view claims".
 
