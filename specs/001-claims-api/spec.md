@@ -34,6 +34,8 @@ files or text, any LLM use, editing or deleting claims."
   duplicates? → A: Yes; trim surrounding spaces and compare case-insensitively.
 - Q: Does a line already rejected for another reason use up the daily meal limit or nightly lodging
   cap? → A: No; it counts as 0 USD toward the limit.
+- Q: Are currency codes normalised on input? → A: Currency codes are trimmed and upper-cased on
+  input, so 'eur' is EUR.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -196,8 +198,9 @@ employee; compare with the seed data.
 - **FR-007**: Users MUST be able to request the policy check of any stored claim by ID. The check is
   computed from stored data and MUST give the same result every time for the same stored data.
 - **FR-008**: The check result MUST list every violation found. Each violation MUST include a rule
-  ID, the affected line (or lines, or calendar day for daily limits), a plain-language message, and a
-  policy citation of doc_id and section (e.g. `POL-MEALS §1`).
+  ID, the affected line (or lines, or calendar day for daily limits), a plain-language message, a
+  policy citation of doc_id and section (e.g. `POL-MEALS §1`), and, for the meals daily limit and
+  lodging nightly cap, the USD amount that violation rejected.
 - **FR-009**: The check result MUST include, for each line: its claimed amount in USD, its
   reimbursable amount in USD, and its rejected amount in USD (claimed minus reimbursable). For a line
   in an unsupported currency the claimed and rejected USD amounts are absent and the reimbursable
@@ -285,7 +288,8 @@ employee; compare with the seed data.
   either side.
 - **SC-005**: Checking the same stored claim repeatedly returns identical results, including after
   further claims are submitted.
-- **SC-006**: Every refused submission names each invalid field, and none leaves partial data
+- **SC-006**: Every refused submission names each invalid field it can evaluate; cross-field errors
+  are reported once the fields they compare are valid. No refused submission leaves partial data
   stored.
 
 ## Assumptions
