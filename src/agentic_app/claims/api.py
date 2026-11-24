@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from agentic_app.claims import store
 from agentic_app.claims.policy import Policy
 from agentic_app.claims.rules import check_claim
-from agentic_app.schemas import Claim, CheckResult
+from agentic_app.schemas import CheckResult, Claim, ClaimIn
 
 router = APIRouter()
 
@@ -44,3 +44,11 @@ def check(claim_id: int, conn: Conn, policy: CurrentPolicy) -> CheckResult:
     claim = _claim_or_404(conn, claim_id)
     prior = store.prior_lines(conn, claim.employee_id, claim.id)
     return check_claim(claim, prior, policy)
+
+
+@router.post("/claims", status_code=201, response_model=Claim)
+def submit(claim_in: ClaimIn, conn: Conn) -> Claim:
+    """Store a valid claim and return it with its new ID (User Story 2). Invalid input never
+    reaches here: FastAPI answers 422 listing each error (research R-06)."""
+    return store.add_claim(conn, claim_in)
+

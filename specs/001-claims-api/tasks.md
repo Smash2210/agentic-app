@@ -125,11 +125,11 @@ ID and read back unchanged, invalid ones leave the database unchanged.
 
 ### Tests for User Story 2 (write first, see them fail)
 
-- [ ] T034 [P] [US2] Submit endpoint tests in tests/claims/test_api_submit.py: the contracts/claims-api.md request returns 201 with `id`, `line_no` 1..3, lodging `nights` 2 and other `nights` null, currency upper-cased; a `JPY` line is accepted with 201; 422 with the right `loc` for end before start, unknown category, zero amount, amount as a JSON number, empty merchant, line date outside the trip, `nights` on a meal line, and no lines; after each 422 the claim count in the DB is unchanged; the stored claim read via `store.get_claim` matches the request (spec FR-001–FR-003, SC-006)
+- [X] T034 [P] [US2] Submit endpoint tests in tests/claims/test_api_submit.py: the contracts/claims-api.md request returns 201 with `id`, `line_no` 1..3, lodging `nights` 2 and other `nights` null, currency upper-cased; a `JPY` line is accepted with 201; 422 with the right `loc` for end before start, unknown category, zero amount, amount as a JSON number, empty merchant, line date outside the trip, `nights` on a meal line, and no lines; after each 422 the claim count in the DB is unchanged; the stored claim read via `store.get_claim` matches the request (spec FR-001–FR-003, SC-006)
 
 ### Implementation for User Story 2
 
-- [ ] T035 [US2] Add `POST /claims` (status 201, body `ClaimIn`, response `Claim`) to src/agentic_app/claims/api.py using `store.add_claim` so T034 passes
+- [X] T035 [US2] Add `POST /claims` (status 201, body `ClaimIn`, response `Claim`) to src/agentic_app/claims/api.py using `store.add_claim` so T034 passes
 
 **Checkpoint**: US1 and US2 both work; `uv run pytest` green; commit "feat(001): US2 submit claims".
 
