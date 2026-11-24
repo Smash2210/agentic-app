@@ -34,7 +34,7 @@
     ],
     "expected_rules": ["MEALS_DAILY_LIMIT"],
     "expected_total_usd": "642.90",
-    "expected_working": "Lodging 360.00 EUR x 1.08 = 388.80 over 3 nights = 129.60/night <= other-city cap 140. Meals 2026-02-03: 40.00 EUR = 43.20 and 35.00 EUR = 37.80, day 81.00 > 75; line order pays 43.20 then 31.80, excess 6.20. Meal 2026-02-04: 20.00 EUR = 21.60 <= 25 needs no receipt. Lines 388.80 + 43.20 + 31.80 + 21.60 = 485.40. Per diem Paris 4 days: 33.75 + 45 + 45 + 33.75 = 157.50. Total 642.90."
+    "expected_working": "Lodging 360.00 EUR x 1.08 = 388.80 over 3 nights = 129.60/night <= other-city cap 140. Meals 2026-02-03: 40.00 EUR = 43.20 and 35.00 EUR = 37.80, day 81.00 > 75; line order pays 43.20 then 31.80, excess 6.00. Meal 2026-02-04: 20.00 EUR = 21.60 <= 25 needs no receipt. Lines 388.80 + 43.20 + 31.80 + 21.60 = 485.40. Per diem Paris 4 days: 33.75 + 45 + 45 + 33.75 = 157.50. Total 642.90."
   },
   {
     "employee_id": "E-002",

@@ -158,9 +158,9 @@ stored.
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T040 [P] Add a "Claims API" section to README.md with the quickstart.md commands (install, seed, run with `--factory`, docs URL)
-- [ ] T041 Run every quickstart.md step and validation scenario against a fresh `data/claims.db`; record the commands and responses in evidence/M02-agentic-coding/README.md
-- [ ] T042 Run `env -u GOOGLE_API_KEY uv run pytest` and confirm it is green with no network access; confirm `git status` shows no `data/claims.db`
+- [X] T040 [P] Add a "Claims API" section to README.md with the quickstart.md commands (install, seed, run with `--factory`, docs URL)
+- [X] T041 Run every quickstart.md step and validation scenario against a fresh `data/claims.db`; record the commands and responses in evidence/M02-agentic-coding/README.md
+- [X] T042 Run `env -u GOOGLE_API_KEY uv run pytest` and confirm it is green with no network access; confirm `git status` shows no `data/claims.db`
 
 **Checkpoint**: commit "docs(001): quickstart evidence and README".
 
