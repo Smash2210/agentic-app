@@ -1,6 +1,110 @@
 {
   "components": {
     "schemas": {
+      "AdjudicateRequest": {
+        "properties": {
+          "employee_id": {
+            "description": "Employee the receipts belong to, e.g. E-001; trimmed. Their stored claims are used to spot duplicates.",
+            "maxLength": 200,
+            "title": "Employee Id",
+            "type": "string"
+          },
+          "receipts": {
+            "description": "Receipts as plain text, one string per receipt (1 to 10, each at most 5,000 characters).",
+            "items": {
+              "maxLength": 5000,
+              "type": "string"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "title": "Receipts",
+            "type": "array"
+          },
+          "trip": {
+            "$ref": "#/components/schemas/Trip",
+            "description": "The trip the receipts belong to."
+          }
+        },
+        "required": [
+          "employee_id",
+          "trip",
+          "receipts"
+        ],
+        "title": "AdjudicateRequest",
+        "type": "object"
+      },
+      "Adjudication": {
+        "properties": {
+          "check": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CheckResult"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The policy check of `lines`, exactly as GET /claims/{id}/check computes it. Every amount in this response comes from here. Null if no lines could be checked."
+          },
+          "decision": {
+            "$ref": "#/components/schemas/Decision",
+            "description": "Set by code, never by the model: needs_human_review if anything is flagged, unreadable or invalid; otherwise reject (nothing reimbursable), partial (anything rejected or any violation) or approve."
+          },
+          "explanation": {
+            "description": "Short explanation for the employee, citing policy sections.",
+            "title": "Explanation",
+            "type": "string"
+          },
+          "flags": {
+            "description": "Items left out because the policy excludes them but the check cannot see them.",
+            "items": {
+              "$ref": "#/components/schemas/Flag"
+            },
+            "title": "Flags",
+            "type": "array"
+          },
+          "lines": {
+            "description": "Expense lines read from the receipts, as checked. Empty if none could be checked.",
+            "items": {
+              "$ref": "#/components/schemas/ExpenseLine"
+            },
+            "title": "Lines",
+            "type": "array"
+          },
+          "review_reasons": {
+            "description": "Why the decision is needs_human_review; empty otherwise.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Review Reasons",
+            "type": "array"
+          },
+          "unreadable": {
+            "description": "Receipts, or parts of them, that could not be read with confidence.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Unreadable",
+            "type": "array"
+          },
+          "usage": {
+            "$ref": "#/components/schemas/ModelUsage",
+            "description": "Model usage for this request."
+          }
+        },
+        "required": [
+          "decision",
+          "review_reasons",
+          "lines",
+          "check",
+          "flags",
+          "unreadable",
+          "explanation",
+          "usage"
+        ],
+        "title": "Adjudication",
+        "type": "object"
+      },
       "Category": {
         "enum": [
           "meal",
@@ -185,6 +289,16 @@
         "title": "ClaimIn",
         "type": "object"
       },
+      "Decision": {
+        "enum": [
+          "approve",
+          "partial",
+          "reject",
+          "needs_human_review"
+        ],
+        "title": "Decision",
+        "type": "string"
+      },
       "ExpenseLine": {
         "properties": {
           "amount": {
@@ -316,6 +430,39 @@
         "title": "ExpenseLineIn",
         "type": "object"
       },
+      "Flag": {
+        "properties": {
+          "citation": {
+            "description": "Policy section, e.g. POL-LODGING §4.",
+            "title": "Citation",
+            "type": "string"
+          },
+          "item": {
+            "description": "The item as it appears on the receipt.",
+            "title": "Item",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why it was left out of the lines.",
+            "title": "Reason",
+            "type": "string"
+          },
+          "receipt": {
+            "description": "Receipt number, from 1, in request order.",
+            "minimum": 1.0,
+            "title": "Receipt",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "receipt",
+          "item",
+          "reason",
+          "citation"
+        ],
+        "title": "Flag",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -379,6 +526,56 @@
           "flagged_for_review"
         ],
         "title": "LineResult",
+        "type": "object"
+      },
+      "ModelUsage": {
+        "properties": {
+          "cached_tokens": {
+            "description": "Input tokens served from the model's cache.",
+            "title": "Cached Tokens",
+            "type": "integer"
+          },
+          "latency_ms": {
+            "description": "Time spent in model calls, milliseconds.",
+            "title": "Latency Ms",
+            "type": "integer"
+          },
+          "model": {
+            "description": "Model used.",
+            "title": "Model",
+            "type": "string"
+          },
+          "model_calls": {
+            "description": "Model calls made for this request.",
+            "title": "Model Calls",
+            "type": "integer"
+          },
+          "output_tokens": {
+            "description": "Output tokens, summed over calls.",
+            "title": "Output Tokens",
+            "type": "integer"
+          },
+          "prompt_tokens": {
+            "description": "Input tokens, summed over calls.",
+            "title": "Prompt Tokens",
+            "type": "integer"
+          },
+          "thoughts_tokens": {
+            "description": "Reasoning tokens, summed over calls.",
+            "title": "Thoughts Tokens",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "model",
+          "model_calls",
+          "prompt_tokens",
+          "cached_tokens",
+          "thoughts_tokens",
+          "output_tokens",
+          "latency_ms"
+        ],
+        "title": "ModelUsage",
         "type": "object"
       },
       "NotFound": {
@@ -583,6 +780,51 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/adjudicate": {
+      "post": {
+        "description": "Read receipts given as plain text, turn them into expense lines and check them against the policy, with a decision and a short explanation. A model reads the receipts and writes the explanation; every amount, violation and the decision come from the policy check and code, never from the model. Items the policy excludes but the check cannot see (alcohol, minibar, ...) and unreadable receipts are reported and make the decision needs_human_review. Nothing is stored: submit the lines with POST /claims.",
+        "operationId": "adjudicate_receipts_adjudicate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdjudicateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Adjudication"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "description": "The model is not configured or still unavailable after retries."
+          }
+        },
+        "summary": "Adjudicate receipts",
+        "tags": [
+          "adjudicate"
+        ]
+      }
+    },
     "/claims": {
       "get": {
         "description": "Return every claim the employee has submitted, oldest first (ascending ID). Returns an empty list if there are none.",

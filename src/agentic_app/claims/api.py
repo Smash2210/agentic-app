@@ -9,7 +9,14 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request
 from agentic_app.claims import store
 from agentic_app.claims.policy import Policy
 from agentic_app.claims.rules import check_claim
-from agentic_app.schemas import CheckResult, Claim, ClaimIn, NotFound
+from agentic_app.schemas import (
+    AdjudicateRequest,
+    Adjudication,
+    CheckResult,
+    Claim,
+    ClaimIn,
+    NotFound,
+)
 
 router = APIRouter()
 
@@ -117,3 +124,35 @@ def list_for_employee(
 ) -> list[Claim]:
     """An employee's claims in submission order; [] if none."""
     return store.list_claims(conn, employee_id)
+
+
+# Higher than any claim ID: an adjudication is checked against all of the employee's stored claims.
+_AFTER_EVERY_CLAIM = 2**63 - 1
+
+
+@router.post(
+    "/adjudicate",
+    response_model=Adjudication,
+    tags=["adjudicate"],
+    summary="Adjudicate receipts",
+    description=(
+        "Read receipts given as plain text, turn them into expense lines and check them against "
+        "the policy, with a decision and a short explanation. A model reads the receipts and "
+        "writes the explanation; every amount, violation and the decision come from the policy "
+        "check and code, never from the model. Items the policy excludes but the check cannot "
+        "see (alcohol, minibar, ...) and unreadable receipts are reported and make the decision "
+        "needs_human_review. Nothing is stored: submit the lines with POST /claims."
+    ),
+    responses={503: {"description": "The model is not configured or still unavailable after retries."}},
+)
+def adjudicate_receipts(body: AdjudicateRequest, conn: Conn, policy: CurrentPolicy) -> Adjudication:
+    """Preview adjudication of raw receipts (spec 002)."""
+    # Imported here so the Claims API can start without loading .env or the Gemini SDK (M02 U1).
+    from agentic_app.adjudicate import adjudicate
+    from agentic_app.llm import ModelUnavailable
+
+    prior = store.prior_lines(conn, body.employee_id, _AFTER_EVERY_CLAIM)
+    try:
+        return adjudicate(body, prior, policy)
+    except ModelUnavailable as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc

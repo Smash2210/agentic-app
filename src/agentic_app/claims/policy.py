@@ -42,6 +42,7 @@ class Policy:
     same_day_fraction: Decimal
     receipt_threshold_usd: Decimal
     sections: Mapping[str, frozenset[str]]
+    text: str = ""  # the documents themselves, for a model to read (spec 002); never parsed for numbers
 
     def rate_for(self, currency: str) -> Decimal | None:
         """USD per unit of `currency`, or None if the currency is not supported."""
@@ -62,6 +63,7 @@ def _city_key(city: str) -> str:
 class _Doc:
     file_name: str
     sections: dict[str, str]  # section number -> text of that section
+    text: str
 
     def section(self, number: str) -> str:
         if number not in self.sections:
@@ -112,7 +114,7 @@ def _read_doc(policy_dir: Path, doc_id: str, file_name: str) -> _Doc:
         match.group(1): text[match.end(): starts[i + 1].start() if i + 1 < len(starts) else None]
         for i, match in enumerate(starts)
     }
-    return _Doc(file_name, sections)
+    return _Doc(file_name, sections, text)
 
 
 def _city_table(doc: _Doc, number: str) -> tuple[Mapping[str, Decimal], Decimal]:
@@ -152,4 +154,5 @@ def load_policy(policy_dir: Path) -> Policy:
         sections=MappingProxyType(
             {doc_id: frozenset(doc.sections) for doc_id, doc in docs.items()}
         ),
+        text="\n\n".join(doc.text.strip() for doc in docs.values()),
     )
