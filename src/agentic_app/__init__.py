@@ -1,9 +1,10 @@
 import sys
 
-from agentic_app.llm import generate
-
 
 def main() -> None:
+    # Imported here so importing the package (e.g. the Claims API) does not load .env or Gemini.
+    from agentic_app.llm import generate
+
     if len(sys.argv) < 2:
         print('Usage: agentic-app "your question"', file=sys.stderr)
         sys.exit(1)
