@@ -1,0 +1,7 @@
+ADDISON LEE - Receipt
+Account: E-002
+
+20 Apr 2026   Heathrow T5 -> Kings Cross      GBP 48.00
+21 Apr 2026   Kings Cross -> Heathrow T5      GBP 51.50
+
+Total (2 journeys)                            GBP 99.50
