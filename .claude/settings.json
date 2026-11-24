@@ -5,5 +5,18 @@
       "Read(./.env.*)",
       "Bash(cat .env*)"
     ]
+  },
+   "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && out=$(uv run pytest -q 2>&1) || { echo \"$out\" | tail -20 >&2; exit 2; }"
+          }
+        ]
+      }
+    ]
   }
 }
