@@ -50,6 +50,9 @@ decision the spec leaves open, with rationale and rejected alternatives.
   term is already exact, so rounding once at the end equals rounding per day. SQLite columns holding
   money are `TEXT` storing `str(Decimal)`; read back with `Decimal(text)`.
 - **Rationale**: Principle IV; POL-CURRENCY §3; POL-PERDIEM §4.
+- **Note**: the 2-decimal precision (`Decimal("0.01")` in `to_cents`) is fixed by Constitution IV and
+  POL-CURRENCY §3. It is the one permitted numeric constant in the money path; every other number
+  comes from the `Policy` object.
 - **Alternatives considered**: integer cents (loses the original amount's exact form, e.g. INR rates
   of 0.012 produce sub-cent values before rounding); REAL columns (float, forbidden).
 
@@ -167,7 +170,9 @@ decision the spec leaves open, with rationale and rejected alternatives.
   `app.app_from_env()` is a no-argument factory that reads `CLAIMS_DB_PATH` (default
   `data/claims.db`) and `POLICY_DIR` (default `data/policies`) from the environment and calls
   `create_app`. The server runs with `uvicorn agentic_app.app:app_from_env --factory`. The module
-  builds **no** app at import time. A new `sqlite3` connection is opened per request; inserts run in
+  builds **no** app at import time. `agentic_app/__init__.py` imports `agentic_app.llm` only inside
+  `main()`, so importing `agentic_app.app` does not run `load_dotenv()` or import `google.genai`
+  (analysis U1; tasks T013–T014). A new `sqlite3` connection is opened per request; inserts run in
   one transaction so refused or failed submits store nothing. `data/claims.db` is git-ignored.
 - **Rationale**: Importing `agentic_app.app` (including from tests) must have no side effects: no
   policy parsing and no database file created, the same import-side-effect problem fixed in

@@ -74,7 +74,7 @@ specs/001-claims-api/
 
 ```text
 src/agentic_app/
-├── __init__.py          # existing CLI (unchanged)
+├── __init__.py          # existing CLI; llm import moved inside main() (R-12)
 ├── llm.py               # existing Gemini wrapper (unchanged, not imported by this feature)
 ├── schemas.py           # Pydantic models: Trip, ExpenseLine, ClaimIn, Claim, Citation,
 │                        #   Violation, LineResult, PerDiem, CheckResult
@@ -95,6 +95,7 @@ data/
 
 tests/
 ├── test_llm.py          # existing
+├── test_package_import.py   # importing agentic_app does not load llm / google.genai
 ├── claims/
 │   ├── conftest.py      # policy fixture (real data/policies), tmp DB, TestClient
 │   ├── test_money.py
@@ -108,7 +109,11 @@ tests/
 │   ├── test_rules_check.py   # combined behaviour, ordering, determinism
 │   ├── test_schemas.py       # validation (FR-002)
 │   ├── test_store.py
-│   ├── test_api.py
+│   ├── test_app.py           # app factory, no import side effects
+│   ├── test_rules_purity.py  # AST scan: no I/O, clock, float or policy literals
+│   ├── test_api_check.py
+│   ├── test_api_submit.py
+│   ├── test_api_view.py
 │   └── test_seed.py          # SC-001, SC-002
 ```
 

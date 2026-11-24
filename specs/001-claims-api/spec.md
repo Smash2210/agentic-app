@@ -62,7 +62,7 @@ with the expected results worked out by hand from the policy documents.
    rejected as excess.
 3. **Given** a London trip with a lodging line of 250.00 USD for one night (with receipt), **When**
    it is checked, **Then** 220.00 USD is reimbursable, 30.00 USD is rejected, and the violation cites
-   POL-LODGING §1 and §3.
+   POL-LODGING §1–3.
 4. **Given** a trip to Paris from 10 March to 13 March, **When** it is checked, **Then** the per diem
    allowance is 45 × 0.75 + 45 + 45 + 45 × 0.75 = 157.50 USD, citing POL-PERDIEM §1–2.
 5. **Given** a same-day trip to London, **When** it is checked, **Then** the per diem allowance is
@@ -268,7 +268,8 @@ employee; compare with the seed data.
 - **Expense line**: One expense on a claim: date, category, merchant, amount, currency code,
   receipt-attached flag, number of nights (lodging only, default 1), and its position within the
   claim.
-- **Violation**: A rule broken by a claim: rule ID, affected line(s) or day, message, and citation
+- **Violation**: A rule broken by a claim: rule ID, affected line(s) or day, rejected amount (for
+  daily and nightly limits), message, and citation
   (doc_id + section).
 - **Check result**: The outcome of checking a claim: violations, per-line USD amounts (claimed,
   reimbursable, rejected), per diem allowance, and total reimbursable USD. Computed on request; not
