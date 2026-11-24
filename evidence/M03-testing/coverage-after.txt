@@ -1,0 +1,17 @@
+
+Name                                 Stmts   Miss Branch BrPart  Cover   Missing
+--------------------------------------------------------------------------------
+src/agentic_app/__init__.py             12      3      2      0    79%   15-17
+src/agentic_app/app.py                  21      0      0      0   100%
+src/agentic_app/claims/__init__.py       0      0      0      0   100%
+src/agentic_app/claims/api.py           37      0      2      0   100%
+src/agentic_app/claims/money.py         10      1      4      1    86%   20
+src/agentic_app/claims/policy.py        87      2     18      2    96%   68, 85
+src/agentic_app/claims/rules.py        120      0     40      0   100%
+src/agentic_app/claims/seed.py          30     30      6      0     0%   6-49
+src/agentic_app/claims/store.py         38      0      4      0   100%
+src/agentic_app/llm.py                  24      0      4      0   100%
+src/agentic_app/schemas.py             125      0     22      0   100%
+--------------------------------------------------------------------------------
+TOTAL                                  504     36    102      3    93%
+====================== 268 passed, 1 deselected in 5.69s =======================
