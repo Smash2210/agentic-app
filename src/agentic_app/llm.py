@@ -10,6 +10,20 @@ load_dotenv()
 
 # Temporary errors worth retrying: rate limit, server error, overloaded ("high demand").
 TRANSIENT_CODES = (429, 500, 503)
+
+
+def _transport_errors() -> tuple[type[Exception], ...]:
+    """Timeouts and connection failures from the HTTP client the SDK uses (httpx2, or httpx)."""
+    found = []
+    for name in ("httpx2", "httpx"):
+        try:
+            found.append(__import__(name).TransportError)
+        except (ImportError, AttributeError):
+            pass
+    return tuple(found)
+
+
+TRANSPORT_ERRORS = _transport_errors()
 BACKOFF_S = (5, 10)  # per model: 3 tries over ~15 s, then the next model in the fallback list
 _sleep = time.sleep  # replaced in tests
 
@@ -75,11 +89,12 @@ def generate_content(
                 response = client.models.generate_content(model=model, contents=contents, config=config)
                 response.model_version = model  # the name we asked for, so callers can prefer it
                 return response
-            except errors.APIError as exc:
-                if exc.code not in TRANSIENT_CODES:
+            except (errors.APIError, *TRANSPORT_ERRORS) as exc:
+                if isinstance(exc, errors.APIError) and exc.code not in TRANSIENT_CODES:
                     raise
                 if attempt == len(BACKOFF_S):
-                    failures.append(f"{model} (HTTP {exc.code})")
+                    reason = f"HTTP {exc.code}" if isinstance(exc, errors.APIError) else type(exc).__name__
+                    failures.append(f"{model} ({reason})")
                     break
                 _sleep(BACKOFF_S[attempt])
     raise ModelUnavailable(

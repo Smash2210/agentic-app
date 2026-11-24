@@ -236,6 +236,14 @@ def test_falls_back_to_the_next_model_when_one_stays_unavailable(fake, monkeypat
     assert result.decision is Decision.APPROVE and result.usage.model == "backup-model"
 
 
+def test_timeouts_are_temporary_too(fake, monkeypatch):
+    monkeypatch.setenv("GEMINI_FALLBACK_MODELS", "backup-model")
+    timeout = llm.TRANSPORT_ERRORS[0]("read timed out")
+    models = fake(timeout, timeout, timeout, tool_call(TAXIS), DONE, answer())
+    result = adjudicate(request(), [], POLICY)
+    assert result.decision is Decision.APPROVE and models.calls[3]["model"] == "backup-model"
+
+
 def test_every_model_unavailable_names_them_all(fake, monkeypatch):
     monkeypatch.setenv("GEMINI_FALLBACK_MODELS", "backup-model")
     fake(*[api_error(503)] * 3, *[api_error(429)] * 3)
