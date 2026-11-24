@@ -152,9 +152,15 @@ decision the spec leaves open, with rationale and rejected alternatives.
 
 ## R-10 Multi-night lodging split
 
-- **Decision**: `share = to_cents(claimed_usd / nights)` for every night except the last; the last
-  night gets `claimed_usd − share × (nights − 1)`. Night dates are `date + k` for `k in 0..nights−1`.
-- **Rationale**: Clarification Q5; shares always sum exactly to the line amount.
+- **Decision**: `share = (claimed_usd / nights)` rounded **down** to cents (`ROUND_DOWN`) for every
+  night except the last; the last night gets `claimed_usd − share × (nights − 1)`. Night dates are
+  `date + k` for `k in 0..nights−1`.
+- **Rationale**: Clarification Q5; shares always sum exactly to the line amount, and rounding down
+  means the leftover is never negative.
+- **Amended 2026-11-24 (M03)**: the original rule rounded each share half-up. For 0.02 USD over 4
+  nights that gives 0.01 × 3 and −0.01 on the last night; the negative share freed one cent of that
+  night's cap for another line (found by the test-generator subagent; see
+  `evidence/M03-testing/defect.md`).
 
 ## R-11 Prior lines for duplicates
 

@@ -1,0 +1,47 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.16, pytest-9.2.0, pluggy-1.7.0
+rootdir: /Users/swapnilshah/Desktop/agentic-app
+configfile: pyproject.toml
+testpaths: tests
+plugins: cov-7.1.0, anyio-4.16.0
+collected 225 items / 1 deselected / 224 selected
+
+tests/claims/test_api_check.py .....                                     [  2%]
+tests/claims/test_api_submit.py ...............                          [  8%]
+tests/claims/test_api_view.py .....                                      [ 11%]
+tests/claims/test_app.py ....                                            [ 12%]
+tests/claims/test_money.py ..............                                [ 19%]
+tests/claims/test_policy.py .....................                        [ 28%]
+tests/claims/test_rules_check.py ..........                              [ 33%]
+tests/claims/test_rules_currency.py ..........                           [ 37%]
+tests/claims/test_rules_duplicates.py ..........                         [ 41%]
+tests/claims/test_rules_lodging.py ................                      [ 49%]
+tests/claims/test_rules_meals.py ..........                              [ 53%]
+tests/claims/test_rules_per_diem.py ..........                           [ 58%]
+tests/claims/test_rules_purity.py .............                          [ 63%]
+tests/claims/test_rules_receipts.py ...........                          [ 68%]
+tests/claims/test_schemas.py .........................................   [ 87%]
+tests/claims/test_seed.py ......                                         [ 89%]
+tests/claims/test_store.py ...........                                   [ 94%]
+tests/test_llm.py ........                                               [ 98%]
+tests/test_package_import.py ....                                        [100%]
+
+================================ tests coverage ================================
+______________ coverage: platform darwin, python 3.12.16-final-0 _______________
+
+Name                                 Stmts   Miss Branch BrPart  Cover   Missing
+--------------------------------------------------------------------------------
+src/agentic_app/__init__.py             12      3      2      0    79%   15-17
+src/agentic_app/app.py                  21      0      0      0   100%
+src/agentic_app/claims/__init__.py       0      0      0      0   100%
+src/agentic_app/claims/api.py           37      0      2      0   100%
+src/agentic_app/claims/money.py          6      0      2      0   100%
+src/agentic_app/claims/policy.py        87      2     18      2    96%   68, 85
+src/agentic_app/claims/rules.py        120      0     40      0   100%
+src/agentic_app/claims/seed.py          30     30      6      0     0%   6-49
+src/agentic_app/claims/store.py         38      0      4      0   100%
+src/agentic_app/llm.py                  24      0      4      0   100%
+src/agentic_app/schemas.py             125      0     22      0   100%
+--------------------------------------------------------------------------------
+TOTAL                                  500     35    100      2    93%
+====================== 224 passed, 1 deselected in 2.22s =======================

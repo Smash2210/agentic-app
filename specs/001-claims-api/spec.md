@@ -28,8 +28,10 @@ files or text, any LLM use, editing or deleting claims."
 - Q: How is a single lodging line covering several nights capped? → A: Lodging lines carry a number
   of nights (default 1, dated the first night); each night is capped on its own.
 - Q: How is a multi-night lodging amount assigned to each night? → A: Split evenly per night, rounded
-  half-up to cents, with the last night taking any leftover cent; then each night is capped, filling
-  lines in line order.
+  down to cents, with the last night taking the leftover cents; then each night is capped, filling
+  lines in line order. (Amended 2026-11-24, M03: rounding each share half-up could leave the last
+  night a negative share, which freed cap for another line that night. Rounding down makes the
+  leftover 0 or more, so no share is ever negative.)
 - Q: Do merchant names differing only in case or surrounding spaces count as the same merchant for
   duplicates? → A: Yes; trim surrounding spaces and compare case-insensitively.
 - Q: Does a line already rejected for another reason use up the daily meal limit or nightly lodging
@@ -152,7 +154,7 @@ employee; compare with the seed data.
   that crosses the limit is partly reimbursed and every later line on that day or night is fully
   rejected for that day or night.
 - A multi-night lodging line whose amount does not split evenly into cents (e.g. 100.00 USD over
-  3 nights): shares are 33.33, 33.33 and 33.34 USD (half-up rounding, leftover cent on the last
+  3 nights): shares are 33.33, 33.33 and 33.34 USD (rounded down, leftover cent on the last
   night).
 - Duplicate merchant matching ignores case and surrounding spaces ("Cafe Roma" and " cafe roma"
   match) but not differences inside the name ("Cafe Roma" and "Café Roma" do not).
@@ -235,8 +237,9 @@ employee; compare with the seed data.
   that crosses it is partly reimbursed and later meal lines that day are fully rejected. Any excess
   MUST raise a meals-limit violation for that day; the rest of the claim is processed normally.
 - **FR-017 (Lodging, POL-LODGING §1–3)**: A lodging line covers the nights from its date for its
-  number of nights. Its USD amount is split evenly across those nights, each share rounded half-up
-  to 2 decimals, with the last night taking any leftover cent so the shares sum to the line amount.
+  number of nights. Its USD amount is split evenly across those nights, each share rounded down
+  to 2 decimals, with the last night taking the leftover cents so the shares sum to the line amount;
+  no share is ever negative.
   For each night, reimbursable lodging shares MUST NOT exceed the cap for the trip's destination
   city (Berlin 180, London 220, any other city 140 USD). Nights are capped independently; an unused
   cap on one night never carries to another. Shares for the same night are paid in line order until
