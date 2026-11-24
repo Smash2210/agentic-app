@@ -193,6 +193,87 @@ def test_end_before_start_reported_with_line_errors():
     assert ("lines", 3, "date") in locs
 
 
+# --- M06 security bounds (spec FR-002, Clarifications "M06 security") ---------------------------
+
+
+def test_employee_id_is_trimmed():  # S4
+    claim = ClaimIn.model_validate(with_change(lambda b: b.update(employee_id=" E-7 ")))
+    assert claim.employee_id == "E-7"
+
+
+@pytest.mark.parametrize("amount", ["12", "12.5", "12.50", " 12.50 ", "1000000.00"])
+def test_plain_decimal_amount_is_accepted(amount):  # S2/P2; 1,000,000.00 is the maximum
+    claim = ClaimIn.model_validate(with_change(lambda b: b["lines"][1].update(amount=amount)))
+    assert claim.lines[1].amount == Decimal(amount.strip())
+
+
+@pytest.mark.parametrize(
+    "amount",
+    [
+        "1000000.01",  # S2: over the maximum
+        "1" + "0" * 30 + ".00",  # S2: the original attack
+        "1e2", "1E2", "1.5e1",  # P2: exponent notation
+        "+5.00",  # sign
+        "1 000.00", "12 .50",  # spaces inside
+        ".50",  # no leading digit
+        "١٢.00",  # non-ASCII digits (Decimal would accept them)
+        "NaN", "Infinity",
+    ],
+)
+def test_non_plain_or_too_large_amount_is_refused(amount):  # S2/P2
+    assert ("lines", 1, "amount") in error_locs(
+        with_change(lambda b: b["lines"][1].update(amount=amount))
+    )
+
+
+def test_trip_of_366_days_is_valid():  # S3: start to end inclusive
+    ClaimIn.model_validate(with_change(lambda b: b["trip"].update(end_date="2027-03-10")))
+
+
+def test_trip_of_367_days_is_refused():  # S3
+    assert ("trip", "end_date") in error_locs(
+        with_change(lambda b: b["trip"].update(end_date="2027-03-11"))
+    )
+
+
+def test_50_lines_are_valid():  # S3
+    claim = ClaimIn.model_validate(with_change(lambda b: b.update(lines=[b["lines"][0]] * 50)))
+    assert len(claim.lines) == 50
+
+
+def test_51_lines_are_refused():  # S3
+    assert ("lines",) in error_locs(with_change(lambda b: b.update(lines=[b["lines"][0]] * 51)))
+
+
+def _set_text(field: str, text: str):
+    def change(b):
+        if field == "employee_id":
+            b["employee_id"] = text
+        elif field == "destination_city":
+            b["trip"]["destination_city"] = text
+        else:
+            b["lines"][0]["merchant"] = text
+
+    return change
+
+
+_TEXT_LOCS = {
+    "employee_id": ("employee_id",),
+    "destination_city": ("trip", "destination_city"),
+    "merchant": ("lines", 0, "merchant"),
+}
+
+
+@pytest.mark.parametrize("field", list(_TEXT_LOCS))
+def test_text_of_200_characters_is_valid(field):  # S3
+    ClaimIn.model_validate(with_change(_set_text(field, "x" * 200)))
+
+
+@pytest.mark.parametrize("field", list(_TEXT_LOCS))
+def test_text_of_201_characters_is_refused(field):  # S3
+    assert _TEXT_LOCS[field] in error_locs(with_change(_set_text(field, "x" * 201)))
+
+
 # --- Violation.rule_id is one of the five rule IDs (data-model.md Violation.rule_id) ------------
 
 

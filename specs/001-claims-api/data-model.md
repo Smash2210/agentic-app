@@ -9,9 +9,9 @@ in JSON it is a string (research R-05).
 
 | Field | Type | Rules |
 |---|---|---|
-| `destination_city` | str | required; non-empty after trim |
+| `destination_city` | str | required; non-empty after trim; at most 200 characters as submitted |
 | `start_date` | date (`YYYY-MM-DD`) | required |
-| `end_date` | date | required; `end_date >= start_date` (cross-field) |
+| `end_date` | date | required; `end_date >= start_date`; trip at most 366 days, start to end inclusive (`end_date − start_date + 1 <= 366`) (cross-field, ClaimIn validator) |
 
 ### ExpenseLineIn
 
@@ -19,8 +19,8 @@ in JSON it is a string (research R-05).
 |---|---|---|
 | `date` | date | required; `trip.start_date <= date <= trip.end_date` (cross-field) |
 | `category` | enum `meal` \| `lodging` \| `transport` \| `other` | required |
-| `merchant` | str | required; non-empty after trim |
-| `amount` | Decimal (JSON string) | required; `> 0`; at most 2 decimal places |
+| `merchant` | str | required; non-empty after trim; at most 200 characters as submitted |
+| `amount` | Decimal (JSON string) | required; plain decimal text `[0-9]+(\.[0-9]{0,2})?` after trimming surrounding spaces (no sign, exponent, inner spaces or non-ASCII digits); `> 0`; `<= 1000000.00` |
 | `currency` | str | required; non-empty; trimmed and upper-cased (R-07); not checked against rates here |
 | `receipt_attached` | bool | required |
 | `nights` | int \| null | lodging: integer ≥ 1, default 1; other categories: must be absent/null; lodging: `date + nights − 1 <= trip.end_date` (cross-field) |
@@ -29,9 +29,12 @@ in JSON it is a string (research R-05).
 
 | Field | Type | Rules |
 |---|---|---|
-| `employee_id` | str | required; non-empty after trim |
+| `employee_id` | str | required; non-empty after trim; at most 200 characters as submitted; trimmed |
 | `trip` | Trip | required |
-| `lines` | list[ExpenseLineIn] | at least 1 |
+| `lines` | list[ExpenseLineIn] | at least 1, at most 50 |
+
+Bounds (amount, trip length, lines, text lengths) and employee ID trimming come from the M06
+security amendment (spec FR-002, Clarifications "M06 security").
 
 Cross-field errors are collected together in one claim-level validator (research R-06), with
 locations such as `trip.end_date`, `lines.2.date`, `lines.0.nights`.

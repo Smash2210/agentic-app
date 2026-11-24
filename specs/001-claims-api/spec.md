@@ -39,6 +39,24 @@ files or text, any LLM use, editing or deleting claims."
 - Q: Are currency codes normalised on input? → A: Currency codes are trimmed and upper-cased on
   input, so 'eur' is EUR.
 
+### Session 2026-11-24 (M06 security)
+
+Fixes from the M03 AI review (evidence/M03-testing/ai-review.md, findings S2, S3, S4, P2). All are
+input validation: the claim is refused (422) and nothing is stored.
+
+- Q: What amount text is accepted? → A: Plain decimal text only: ASCII digits, optionally a "." and
+  at most 2 decimals (e.g. "12", "12.5", "12.50"); surrounding spaces are ignored. Exponent notation
+  ("1e2"), signs ("+5", "-5"), spaces inside, and a missing leading digit (".5") are refused.
+  (S2/P2: "1e2" was stored as "1E+2", and a huge amount was stored and then crashed the check.)
+- Q: Is there a maximum amount? → A: Yes, 1,000,000.00 per line, in the line's currency; 1,000,000.01
+  is refused. (S2)
+- Q: Are trip length, number of lines and text fields bounded? → A: A trip is at most 366 days, start
+  to end inclusive (367 is refused); a claim has at most 50 lines; employee_id, merchant and
+  destination_city are at most 200 characters as submitted. Nights need no bound of their own: the
+  last night must not be after the trip's end date. (S3: an unbounded trip made every check slow.)
+- Q: Is the employee ID normalised on input? → A: It is trimmed on input (like currency codes), so
+  " E-7 " is stored as "E-7" and is the same employee for duplicate detection (FR-015). (S4)
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Check a claim against policy (Priority: P1)
@@ -187,7 +205,13 @@ employee; compare with the seed data.
   or city, no expense lines, a line dated before the trip's start date or after its end date, a
   number of nights that is not a whole number of at least 1, a number of nights on a non-lodging
   line, and a lodging line whose last night (date + nights − 1) is after the trip's end date.
-  An unsupported currency code is not invalid input (see FR-013).
+  Also invalid (M06 security): an amount that is not plain decimal text (ASCII digits, optionally
+  "." and at most 2 decimals; surrounding spaces ignored — so no exponent such as "1e2", no sign,
+  no spaces inside) or is over 1,000,000.00; a trip longer than 366 days (start to end inclusive);
+  more than 50 expense lines; an employee ID, merchant or destination city longer than
+  200 characters as submitted.
+  An unsupported currency code is not invalid input (see FR-013). The employee ID is trimmed on
+  input, like the currency code.
 - **FR-003**: The system MUST store each valid claim, assign it a unique ID, and record its
   submission order relative to all other claims.
 - **FR-004**: Users MUST be able to retrieve a stored claim by ID, and to list all claims for an

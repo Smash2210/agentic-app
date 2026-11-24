@@ -157,15 +157,17 @@
         ],
         "properties": {
           "employee_id": {
-            "description": "Employee making the claim, e.g. E-001; must not be blank.",
+            "description": "Employee making the claim, e.g. E-001; must not be blank, at most 200 characters. Trimmed on submit.",
+            "maxLength": 200,
             "title": "Employee Id",
             "type": "string"
           },
           "lines": {
-            "description": "Expense lines, at least one. They are numbered 1, 2, ... in this order.",
+            "description": "Expense lines, at least one and at most 50. They are numbered 1, 2, ... in this order.",
             "items": {
               "$ref": "#/components/schemas/ExpenseLineIn"
             },
+            "maxItems": 50,
             "minItems": 1,
             "title": "Lines",
             "type": "array"
@@ -258,8 +260,9 @@
               }
             ],
             "decimal_places": 2,
-            "description": "Amount in `currency`, as a JSON string such as \"12.50\" (a JSON number is rejected). Greater than 0, at most 2 decimals.",
+            "description": "Amount in `currency`, as a JSON string such as \"12.50\" (a JSON number is rejected). Plain decimal text: digits, optionally \".\" and at most 2 decimals (no sign or exponent such as \"1e2\"). Greater than 0, at most 1000000.00.",
             "gt": 0,
+            "le": "1000000.00",
             "title": "Amount"
           },
           "category": {
@@ -278,7 +281,8 @@
             "type": "string"
           },
           "merchant": {
-            "description": "Who was paid; must not be blank. Used to detect duplicate lines.",
+            "description": "Who was paid; must not be blank, at most 200 characters. Used to detect duplicate lines.",
+            "maxLength": 200,
             "title": "Merchant",
             "type": "string"
           },
@@ -444,12 +448,13 @@
       "Trip": {
         "properties": {
           "destination_city": {
-            "description": "City the trip is to; must not be blank. Sets the lodging cap and per diem rate, matched case-insensitively; a city without its own rate gets the 'any other city' rate.",
+            "description": "City the trip is to; must not be blank, at most 200 characters. Sets the lodging cap and per diem rate, matched case-insensitively; a city without its own rate gets the 'any other city' rate.",
+            "maxLength": 200,
             "title": "Destination City",
             "type": "string"
           },
           "end_date": {
-            "description": "Last day of the trip, included. Must not be before start_date.",
+            "description": "Last day of the trip, included. Must not be before start_date; the trip is at most 366 days, start to end inclusive.",
             "format": "date",
             "title": "End Date",
             "type": "string"

@@ -87,6 +87,15 @@ def test_later_claims_do_not_change_an_earlier_result(client, db_path):
     assert later["lines"][0]["flagged_for_review"] is True
 
 
+def test_spaces_around_employee_id_do_not_dodge_duplicates(client):
+    # S4 (M03 AI review): the same line under "E-7" then " E-7" was not a DUPLICATE.
+    client.post("/claims", json={**TAXI_CLAIM, "employee_id": "E-7"})
+    second = client.post("/claims", json={**TAXI_CLAIM, "employee_id": " E-7"}).json()["id"]
+
+    later = client.get(f"/claims/{second}/check").json()
+    assert [v["rule_id"] for v in later["violations"]] == ["DUPLICATE"]
+
+
 def test_other_employees_claims_are_not_duplicates(client, db_path):
     add(db_path, TAXI_CLAIM)
     other = add(db_path, {**TAXI_CLAIM, "employee_id": "E-002"})
