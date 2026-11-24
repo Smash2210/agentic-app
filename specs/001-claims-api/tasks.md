@@ -240,3 +240,11 @@ Task: "Check endpoint tests in tests/claims/test_api_check.py"
 - [P] tasks touch different files and depend on no incomplete task
 - Every test task must be seen failing before its implementation task
 - If a task reveals a spec gap, stop and ask (constitution I); do not guess
+
+---
+
+## Phase 7: Convergence
+
+- [ ] T043 CRITICAL: Remove module-level mutable state from src/agentic_app/claims/rules.py: make `_RULE_ORDER` a tuple, and hold `RULE_CITATIONS` / `PER_DIEM_CITATIONS` as immutable values (e.g. a frozen dataclass with `doc_id` and a `sections` tuple) that are turned into fresh `Citation` models on each check; add a test in tests/claims/test_rules_purity.py that a shared citation cannot be mutated, without changing existing tests per Constitution III (contradicts)
+- [ ] T044 Type data-model.md `Violation.rule_id` as the five rule IDs instead of a free `str` in src/agentic_app/schemas.py (e.g. move `RuleId` into schemas.py and re-export it from rules.py) so the OpenAPI schema lists the allowed values per data-model.md Violation.rule_id (partial)
+- [ ] T045 Review the `--seed` option in src/agentic_app/claims/seed.py, which contracts/claims-api.md's CLI contract does not mention: either document it in the contract and quickstart.md or remove it per contracts/claims-api.md CLI contract (unrequested)
