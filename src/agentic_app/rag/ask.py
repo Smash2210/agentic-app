@@ -158,7 +158,8 @@ class AskSession:
                 text = chunk.text or ""
                 answer += text
                 if streaming:
-                    yield sse("token", text)
+                    if text:  # the last chunk often carries no text
+                        yield sse("token", text)
                     continue
                 held += text
                 start = held.lstrip()

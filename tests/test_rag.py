@@ -184,6 +184,12 @@ def test_grounded_answer_streams_tokens_then_citations_then_done(fake):
     assert cites["grounded"] is True and cites["refused"] is False and cites["unverified"] == []
 
 
+def test_empty_chunks_are_not_sent_as_tokens(fake):
+    fake([search_call("minibar"), DONE], [["Not reimbursable ", "[POL-LODGING#4].", ""]])
+    events = run()[1]
+    assert all(d for e, d in events if e == "token")
+
+
 def test_citation_of_a_passage_not_retrieved_is_unverified(fake):
     fake([search_call("minibar"), DONE], [["Not covered [POL-LODGING#4]; insure yourself [POL-SAFETY#2]."]])
     cites = citations_of(run()[1])

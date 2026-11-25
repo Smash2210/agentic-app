@@ -1,0 +1,11 @@
+POST /ask {"question": "What is the dress code in the office?"}
+
+event: token
+data: "I can't answer that from the travel and expense policy. Please ask your manager or the finance team."
+
+event: citations
+data: {"citations": [], "unverified": [], "grounded": true, "refused": true, "refusal_reason": "no policy passage is close enough to the question", "question_similarity": 0.686, "model": null}
+
+event: done
+data: {}
+

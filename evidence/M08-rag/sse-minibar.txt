@@ -1,0 +1,14 @@
+POST /ask {"question": "Can I claim the minibar from my hotel bill?"}
+
+event: token
+data: "Minibar"
+
+event: token
+data: " expenses are not considered lodging and are not reimbursable [POL-LODGING#4]."
+
+event: citations
+data: {"citations": [{"id": "POL-LODGING#4", "document": "Lodging Policy", "section": "What is not covered", "similarity": 0.713}], "unverified": [], "grounded": true, "refused": false, "question_similarity": 0.716, "model": "gemini-3.5-flash-lite"}
+
+event: done
+data: {}
+
