@@ -77,6 +77,10 @@ Rules:
 _CLAIM_NUMBER = re.compile(r"\bclaims?\s*(?:#|no\.?|number)?\s*\d+", re.IGNORECASE)
 
 
+def model_timeout_s() -> float:
+    return float(os.getenv("MODEL_TIMEOUT_S", "60"))
+
+
 def max_steps() -> int:
     return int(os.getenv("AGENT_MAX_STEPS", DEFAULT_MAX_STEPS))
 
@@ -204,13 +208,20 @@ class FallbackGemini(Gemini):
         for i, name in enumerate(names):
             llm_request.model = name
             try:
-                async for response in super().generate_content_async(llm_request, stream):
-                    yield response
-                return
-            except errors.APIError as exc:
-                if exc.code not in TRANSIENT_CODES or i == len(names) - 1:
+                # Hard limit per model (ADK's client has no request timeout; a hung call once
+                # stalled a live eval run for 20 minutes). Responses are collected inside the limit.
+                async with asyncio.timeout(model_timeout_s()):
+                    responses = [r async for r in Gemini.generate_content_async(self, llm_request, stream)]
+            except (errors.APIError, TimeoutError) as exc:
+                transient = isinstance(exc, TimeoutError) or exc.code in TRANSIENT_CODES
+                if not transient or i == len(names) - 1:
                     raise
-                log.warning("model %s unavailable (HTTP %s); trying %s", name, exc.code, names[i + 1])
+                reason = "timeout" if isinstance(exc, TimeoutError) else f"HTTP {exc.code}"
+                log.warning("model %s unavailable (%s); trying %s", name, reason, names[i + 1])
+                continue
+            for response in responses:
+                yield response
+            return
 
 
 def default_model() -> FallbackGemini:

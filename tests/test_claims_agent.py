@@ -177,3 +177,22 @@ def test_default_model_reads_env(monkeypatch):
 
 def _text(responses):
     return "".join(p.text or "" for r in responses for p in r.content.parts)
+
+
+def test_hung_model_call_times_out_and_falls_back(monkeypatch):
+    calls = []
+
+    async def parent(self, llm_request, stream=False):
+        calls.append(llm_request.model)
+        if llm_request.model == "primary":
+            await asyncio.sleep(5)  # hangs past the limit
+        yield say("ok")
+
+    monkeypatch.setattr(ca.Gemini, "generate_content_async", parent)
+    monkeypatch.setenv("MODEL_TIMEOUT_S", "0.05")
+    model = ca.FallbackGemini(model="primary", fallbacks=["backup"])
+
+    async def collect():
+        return [r async for r in model.generate_content_async(LlmRequest(model="primary"))]
+
+    assert _text(asyncio.run(collect())) == "ok" and calls == ["primary", "backup"]
