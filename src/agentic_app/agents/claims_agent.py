@@ -1,0 +1,247 @@
+"""The claims agent (spec 004): ADK `root_agent` with resilient tools and three light patterns.
+
+    user request
+      └─ before_model  ROUTER (code): names a claim number? claim task : policy question
+      │                (a policy question is offered only search_policy)
+      │                ITERATION GUARD: more than AGENT_MAX_STEPS model calls -> fixed stop message
+      ├─ model         claim task: writes a numbered PLAN first, then calls tools
+      ├─ tools         search_policy / get_claim / check_claim: timeout, 1 retry, typed error result
+      ├─ after_tool    records tool output for the reflection check
+      └─ after_model   REFLECTION (code): final answer must cite a policy doc a tool returned and use
+                       only amounts found in tool output; else one revision via review_answer
+
+The model never computes an amount (Principle III): totals come from check_claim, and the
+reflection check rejects any amount that no tool returned.
+"""
+
+import asyncio
+import json
+import logging
+import os
+import re
+import uuid
+from collections.abc import AsyncGenerator
+
+from google.adk.agents import Agent
+from google.adk.agents.callback_context import CallbackContext
+from google.adk.models import Gemini, LlmRequest, LlmResponse
+from google.adk.runners import InMemoryRunner
+from google.genai import errors, types
+
+from agentic_app.llm import TRANSIENT_CODES  # also loads .env, like the rest of the app
+from agentic_app.tools.claims_tools import check_claim, get_claim, search_policy
+
+log = logging.getLogger(__name__)
+
+APP_NAME = "claims_agent"
+DEFAULT_MAX_STEPS = 8
+STATE = "temp:claims_agent"  # per-invocation bookkeeping (route, steps, tool output, revised)
+
+STOP_MESSAGE = ("I stopped after {n} steps without finishing (the step limit for one request). "
+                "Nothing was changed. Please ask about fewer claims at a time, or try again.")
+
+INSTRUCTION = """You are the expense and travel policy copilot for employees.
+
+Route: {route}
+
+For a policy question: call search_policy, then answer in 1-4 sentences using only the passages,
+citing passage IDs in brackets, e.g. [POL-MEALS#1].
+
+For a claim task:
+1. First write a short numbered plan (one line per step: which tool, for which claim).
+2. Then carry it out: get_claim and check_claim for every claim named, and search_policy for the
+   rules involved.
+3. Answer per claim: the violations, the total reimbursable in USD, and the policy behind it, cited
+   as [POL-XXX#n] or POL-XXX §n.
+
+Rules:
+- Never compute, add up or estimate an amount. Repeat amounts exactly as check_claim returned them.
+- Never cite policy from memory; cite only references returned by a tool.
+- A tool result with "status": "error" is not fatal: follow its "fallback" and finish the rest of
+  the task. Tell the user briefly which step failed.
+- If review_answer returns problems, rewrite your answer once to fix them."""
+
+_CLAIM_NUMBER = re.compile(r"\bclaims?\s*(?:#|no\.?|number)?\s*\d+", re.IGNORECASE)
+_DOC_ID = re.compile(r"POL-[A-Z]+")
+_AMOUNT = re.compile(r"\d[\d,]*\.\d{2}")
+
+
+def max_steps() -> int:
+    return int(os.getenv("AGENT_MAX_STEPS", DEFAULT_MAX_STEPS))
+
+
+def route_of(text: str) -> str:
+    """FR-407: a request naming a claim number is a claim task; anything else a policy question."""
+    return "claim_task" if _CLAIM_NUMBER.search(text) else "policy_question"
+
+
+def _amounts(text: str) -> set[str]:
+    return {a.replace(",", "") for a in _AMOUNT.findall(text)}
+
+
+def review(answer: str, tool_output: str) -> list[str]:
+    """FR-409: the deterministic reflection check. Returns the problems found (empty if none)."""
+    problems = []
+    known_docs = set(_DOC_ID.findall(tool_output))
+    if known_docs and not set(_DOC_ID.findall(answer)) & known_docs:
+        problems.append("The answer cites no policy reference returned by the tools; cite one of: "
+                        + ", ".join(sorted(known_docs)) + ".")
+    invented = sorted(_amounts(answer) - _amounts(tool_output))
+    if invented:
+        problems.append("These amounts do not appear in any tool result (do not compute amounts): "
+                        + ", ".join(invented) + ".")
+    return problems
+
+
+def review_answer(problems: list[str]) -> dict:
+    """Internal review step added by the system after a draft answer fails its check. Do not call it
+    yourself.
+
+    Args:
+        problems: What the draft answer got wrong.
+    """
+    return {"status": "revise", "problems": problems,
+            "instruction": "Rewrite your answer once, fixing these problems."}
+
+
+# --- callbacks -------------------------------------------------------------------------------------
+
+def _run_state(ctx: CallbackContext) -> dict:
+    """Bookkeeping for this invocation (reset when a new user request starts)."""
+    state = ctx.state.get(STATE)
+    if not state or state.get("invocation") != ctx.invocation_id:
+        text = "".join(p.text or "" for p in (ctx.user_content.parts if ctx.user_content else []))
+        state = {"invocation": ctx.invocation_id, "route": route_of(text), "steps": 0,
+                 "tool_output": "", "revised": False}
+    return state
+
+
+def _text(response: LlmResponse) -> str:
+    parts = response.content.parts if response.content and response.content.parts else []
+    return "".join(p.text or "" for p in parts if not p.thought)
+
+
+def _has_call(response: LlmResponse) -> bool:
+    parts = response.content.parts if response.content and response.content.parts else []
+    return any(p.function_call for p in parts)
+
+
+def before_model(callback_context: CallbackContext, llm_request: LlmRequest) -> LlmResponse | None:
+    state = _run_state(callback_context)
+    state["steps"] += 1
+    callback_context.state[STATE] = state
+    if state["steps"] > max_steps():  # FR-406: stop the loop instead of calling the model again
+        log.warning("iteration guard: stopping after %d model calls", max_steps())
+        return LlmResponse(content=types.Content(role="model", parts=[
+            types.Part(text=STOP_MESSAGE.format(n=max_steps()))]))
+    if state["route"] == "policy_question":  # FR-407: only the policy tool is offered
+        for tool in llm_request.config.tools or []:
+            if tool.function_declarations:
+                tool.function_declarations = [d for d in tool.function_declarations
+                                              if d.name == "search_policy"]
+        llm_request.tools_dict = {k: v for k, v in llm_request.tools_dict.items()
+                                  if k == "search_policy"}
+    return None
+
+
+def after_tool(tool, args: dict, tool_context, tool_response: dict) -> dict | None:
+    state = _run_state(tool_context)
+    state["tool_output"] += json.dumps(tool_response, ensure_ascii=False, default=str) + "\n"
+    tool_context.state[STATE] = state
+    return None
+
+
+def after_model(callback_context: CallbackContext, llm_response: LlmResponse) -> LlmResponse | None:
+    if llm_response.partial or _has_call(llm_response):
+        return None
+    answer = _text(llm_response)
+    state = _run_state(callback_context)
+    if not answer or answer.startswith(STOP_MESSAGE[:20]):
+        return None
+    problems = review(answer, state["tool_output"])
+    if not problems:
+        return None
+    if not state["revised"]:  # FR-409: send the problems back; the model answers once more
+        state["revised"] = True
+        callback_context.state[STATE] = state
+        log.info("reflection: draft failed review: %s", problems)
+        return LlmResponse(content=types.Content(role="model", parts=[types.Part(
+            function_call=types.FunctionCall(id=f"review-{uuid.uuid4().hex[:8]}",
+                                             name="review_answer", args={"problems": problems}))]))
+    note = "\n\nNote: automatic review still found problems: " + " ".join(problems)
+    return LlmResponse(content=types.Content(role="model", parts=[types.Part(text=answer + note)]))
+
+
+# --- model with fallbacks (FR-411) -------------------------------------------------------------------
+
+class FallbackGemini(Gemini):
+    """Gemini with ADK's HTTP retries on one model, then the next model in `fallbacks`."""
+
+    fallbacks: list[str] = []
+
+    async def generate_content_async(
+        self, llm_request: LlmRequest, stream: bool = False
+    ) -> AsyncGenerator[LlmResponse, None]:
+        names = [self.model] + [m for m in self.fallbacks if m != self.model]
+        for i, name in enumerate(names):
+            llm_request.model = name
+            try:
+                async for response in super().generate_content_async(llm_request, stream):
+                    yield response
+                return
+            except errors.APIError as exc:
+                if exc.code not in TRANSIENT_CODES or i == len(names) - 1:
+                    raise
+                log.warning("model %s unavailable (HTTP %s); trying %s", name, exc.code, names[i + 1])
+
+
+def default_model() -> FallbackGemini:
+    return FallbackGemini(
+        model=os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite"),
+        fallbacks=[m.strip() for m in os.getenv("GEMINI_FALLBACK_MODELS", "").split(",") if m.strip()],
+        retry_options=types.HttpRetryOptions(attempts=3, initial_delay=2, max_delay=10,
+                                             http_status_codes=list(TRANSIENT_CODES)),
+    )
+
+
+def _instruction(ctx) -> str:
+    """Built by ADK before before_model runs, so the route is computed from the request here too."""
+    text = "".join(p.text or "" for p in (ctx.user_content.parts if ctx.user_content else []))
+    return INSTRUCTION.replace("{route}", route_of(text))
+
+
+def build_agent(model=None) -> Agent:
+    return Agent(
+        name=APP_NAME,
+        model=model or default_model(),
+        description="Answers policy questions and checks stored expense claims, citing policy.",
+        instruction=_instruction,
+        tools=[search_policy, get_claim, check_claim, review_answer],
+        before_model_callback=before_model,
+        after_model_callback=after_model,
+        after_tool_callback=after_tool,
+    )
+
+
+root_agent = build_agent()
+
+
+# --- running (tests and scripts/run_agent.py) -----------------------------------------------------
+
+async def run_async(agent: Agent, text: str, on_event=None) -> str:
+    """Run one request in a fresh in-memory session; returns the final text."""
+    runner = InMemoryRunner(agent=agent, app_name=APP_NAME)
+    session = await runner.session_service.create_session(app_name=APP_NAME, user_id="employee")
+    final = ""
+    message = types.Content(role="user", parts=[types.Part(text=text)])
+    async for event in runner.run_async(user_id="employee", session_id=session.id,
+                                        new_message=message):
+        if on_event:
+            on_event(event)
+        if event.is_final_response() and event.content and event.content.parts:
+            final = "".join(p.text or "" for p in event.content.parts if not p.thought) or final
+    return final
+
+
+def run(agent: Agent, text: str, on_event=None) -> str:
+    return asyncio.run(run_async(agent, text, on_event))
