@@ -18,6 +18,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FutureTimeout
 
+from agentic_app.tracing import tracer
 from agentic_app.tools.errors import ToolError, ToolTimeout, ToolUnavailable
 
 log = logging.getLogger(__name__)
@@ -52,17 +53,24 @@ def resilient(tool: str, *, timeout_s: float, fallback: str):
         def wrapper(*args, **kwargs) -> dict:
             body = _body_with_fault(tool, fn, timeout_s)
             for attempt in range(1, MAX_ATTEMPTS + 1):
-                try:
-                    future = _executor.submit(body, *args, **kwargs)
+                with tracer.start_as_current_span("tool.attempt") as span:
+                    span.set_attributes({"tool.name": tool, "tool.attempt": attempt,
+                                         "tool.fault": injected_fault(tool) or ""})
                     try:
-                        return future.result(timeout=timeout_s)
-                    except FutureTimeout:
-                        future.cancel()
-                        raise ToolTimeout(tool, f"no answer within {timeout_s:g} s") from None
-                except ToolError as exc:
-                    error = exc
-                except Exception as exc:  # a bug or an outage behind the tool: never kill the run
-                    error = ToolUnavailable(tool, f"{type(exc).__name__}: {exc}")
+                        future = _executor.submit(body, *args, **kwargs)
+                        try:
+                            result = future.result(timeout=timeout_s)
+                            span.set_attribute("tool.status", result.get("status", "ok"))
+                            return result
+                        except FutureTimeout:
+                            future.cancel()
+                            raise ToolTimeout(tool, f"no answer within {timeout_s:g} s") from None
+                    except ToolError as exc:
+                        error = exc
+                    except Exception as exc:  # a bug or an outage behind the tool: never kill the run
+                        error = ToolUnavailable(tool, f"{type(exc).__name__}: {exc}")
+                    span.set_attributes({"tool.status": "error", "error.type": type(error).__name__,
+                                         "error.message": error.message})
                 log.warning("tool %s attempt %d/%d failed: %s: %s", tool, attempt, MAX_ATTEMPTS,
                             type(error).__name__, error.message)
                 if not error.retryable or attempt == MAX_ATTEMPTS:

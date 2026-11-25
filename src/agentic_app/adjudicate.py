@@ -19,7 +19,7 @@ from decimal import Decimal, InvalidOperation
 from google.genai import types
 from pydantic import BaseModel, ValidationError
 
-from agentic_app import llm
+from agentic_app import guardrails, llm
 from agentic_app.claims.policy import Policy
 from agentic_app.claims.rules import check_claim
 from agentic_app.schemas import (
@@ -277,6 +277,17 @@ def adjudicate(
     request: AdjudicateRequest, prior_lines: Sequence[PriorLine], policy: Policy
 ) -> Adjudication:
     """Read the receipts, check them, decide. Raises llm.ModelUnavailable (FR-210)."""
+    injected = guardrails.injected_receipts(request.receipts)
+    if injected:  # spec 005 FR-509: such receipts never reach the model
+        return Adjudication(
+            decision=Decision.NEEDS_HUMAN_REVIEW,
+            review_reasons=[f"receipt {n} contains text that looks like instructions to the system "
+                            "(possible prompt injection); not read automatically" for n in injected],
+            lines=[], check=None, flags=[], unreadable=[],
+            explanation=guardrails.STATUS[Decision.NEEDS_HUMAN_REVIEW.value],
+            usage=ModelUsage(model="none", model_calls=0, prompt_tokens=0, cached_tokens=0,
+                             thoughts_tokens=0, output_tokens=0, latency_ms=0),
+        )
     run = _Run(request, prior_lines, policy)
     contents = run.read()
     answer, problem = run.answer(contents)
@@ -288,6 +299,8 @@ def adjudicate(
         check=run.check,
         flags=answer.flags if answer else [],
         unreadable=answer.unreadable if answer else [],
-        explanation=answer.explanation if answer else "",
+        # spec 005 FR-509: never sounds final unless the decision is approve
+        explanation=guardrails.explanation_for_decision(answer.explanation if answer else "",
+                                                        decision.value),
         usage=run.usage.model(),
     )
