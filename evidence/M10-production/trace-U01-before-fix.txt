@@ -1,0 +1,17 @@
+trace 0xca55955b61a9474328bf23b35906e05c
+eval.case (9220 ms) {"eval.case_id": "U01", "eval.mode": "live", "eval.passed": false, "eval.failures": "answer: did not refuse"}
+  invoke_workflow claims_agent (7387 ms) [ERROR] {"error.type": "400"}
+    invoke_agent claims_agent (7372 ms) [ERROR] {"error.type": "400"}
+      generate_content recording (1072 ms) {"gen_ai.request.model": "recording"}
+      • model.output {"text": "", "calls": "[{\"name\": \"search_policy\", \"args\": {\"query\": \"vacation days per year\"}}]"}
+      execute_tool search_policy (453 ms) {"gen_ai.tool.name": "search_policy"}
+        tool.attempt (451 ms) {"tool.name": "search_policy", "tool.attempt": 1, "tool.fault": "", "tool.args": "{\"query\": \"vacation days per year\"}", "tool.status": "ok", "tool.result": "{\"status\": \"ok\", \"passages\": [{\"id\": \"POL-BOOKING#2\", \"title\": \"Travel Booking Policy \\u2014 When to book\", \"text\": \"Flights should be booked at least 14 days before departure. Later bookings
+      generate_content recording (5541 ms) {"gen_ai.request.model": "recording"}
+      • model.output {"text": "I'm sorry, but the company travel and expense policy documents do not contain information regarding vacation days.", "calls": "[]"}
+      • guardrail.output.revise {"problems": "The answer cites no policy reference returned by the tools; cite one of: POL-APPROVALS, POL-BOOKING, POL-CURRENCY, POL-MEALS, POL-PERDIEM."}
+      execute_tool review_answer (1 ms) [ERROR] {"gen_ai.tool.name": "review_answer", "error.type": "ValueError"}
+      generate_content recording (288 ms) [ERROR] {"gen_ai.request.model": "recording", "error.type": "400"}
+        • exception {"exception.type": "google.genai.errors.ClientError", "exception.message": "400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': 'Function call is missing a thought_signature in functionCall parts. This is required for tools to work correctly, and missing thought_signature may lead to degraded model performance. Additional data, function call `default_api:review_answer` , p
+      • exception {"exception.type": "google.genai.errors.ClientError", "exception.message": "400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': 'Function call is missing a thought_signature in functionCall parts. This is required for tools to work correctly, and missing thought_signature may lead to degraded model performance. Additional data, function call `default_api:review_answer` , pos
+    • exception {"exception.type": "google.genai.errors.ClientError", "exception.message": "400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': 'Function call is missing a thought_signature in functionCall parts. This is required for tools to work correctly, and missing thought_signature may lead to degraded model performance. Additional data, function call `default_api:review_answer` , posit
+  • exception {"exception.type": "google.genai.errors.ClientError", "exception.message": "400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': 'Function call is missing a thought_signature in functionCall parts. This is required for tools to work correctly, and missing thought_signature may lead to degraded model performance. Additional data, function call `default_api:review_answer` , positio

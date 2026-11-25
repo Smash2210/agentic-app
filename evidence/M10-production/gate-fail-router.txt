@@ -1,0 +1,15 @@
+-_CLAIM_NUMBER = re.compile(r"\bclaims?\s*(?:#|no\.?|number)?\s*\d+", re.IGNORECASE)
++_CLAIM_NUMBER = re.compile(r"\bclaims?\s*#\d+", re.IGNORECASE)  # DELIBERATE REGRESSION
+C01  FAIL  route: route policy_question, expected claim_task; answer: answer failed the grounding check twice
+C02  FAIL  route: route policy_question, expected claim_task; answer: answer failed the grounding check twice
+C03  FAIL  route: route policy_question, expected claim_task; answer: missing facts: 110.50
+C04  FAIL  route: route policy_question, expected claim_task; answer: missing facts: 87.50
+C05  FAIL  route: route policy_question, expected claim_task; answer: missing facts: 580.00
+C06  FAIL  route: route policy_question, expected claim_task; answer: answer failed the grounding check twice; judge: 3/5 The answer correctly reports that claim 99 was not found, but misses the required policy citation.
+M01  FAIL  route: route policy_question, expected claim_task; answer: missing facts: 642.90, 344.05
+M02  FAIL  route: route policy_question, expected claim_task; answer: missing facts: 135.36, 89.10
+M03  FAIL  route: route policy_question, expected claim_task; answer: missing facts: 100.76, 123.66, 327.50
+REGRESSION route_accuracy: 0.679 < baseline 1.0 - margin 0.05
+REGRESSION answer_accuracy: 0.679 < baseline 0.964 - margin 0.05
+GATE FAILED
+exit code: 1

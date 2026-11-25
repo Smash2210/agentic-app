@@ -1,0 +1,5 @@
+config: {'display_name': 'expense-policy-copilot', 'description': 'Answers travel and expense policy questions and checks stored claims (read-only).', 'requirements': ['google-adk>=2.15.1', 'google-genai>=2.34,<3', 'google-cloud-aiplatform[agent_engines]', 'rank-bm25>=0.2.2', 'python-dotenv>=1.2.4', 'pydantic>=2'], 'extra_packages': ['src/agentic_app', 'data/policies', 'data/index', 'data/claims.db'], 'env_vars': {'GEMINI_MODEL': 'gemini-3.5-flash-lite', 'GEMINI_FALLBACK_MODELS': 'gemini-3.5-flash,gemini-3.6-flash', 'POLICY_DIR': 'data/policies', 'CLAIMS_DB_PATH': 'data/claims.db', 'AGENT_MAX_STEPS': '8'}}
+AdkApp built and serialized: 2,026 bytes (what agent_engines.create would upload)
+CALL   search_policy {'query': 'daily limit for meals'}
+RESULT search_policy ok
+FINAL  The daily limit for meal expenses is 75 USD per calendar day, which covers breakfast, lunch, dinner, and snacks combined [POL-MEALS#1]. Any amount exceeding this daily limit is not reimbursed [POL-MEALS#3].
