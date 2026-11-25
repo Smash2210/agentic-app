@@ -41,6 +41,14 @@ APP_NAME = "claims_agent"
 DEFAULT_MAX_STEPS = 8
 STATE = "temp:claims_agent"  # per-invocation bookkeeping (route, steps, tool output, revised)
 
+NOT_IN_POLICY = "NOT_IN_POLICY"
+# The same code-written refusal as POST /ask (spec 003 FR-304); never the model's own wording.
+REFUSAL = ("I can't answer that from the travel and expense policy. "
+           "Please ask your manager or the finance team.")
+# Gemini 3 requires a thought signature on every function call in the history; a call the system
+# injects itself (review_answer) has none, so it carries Gemini's documented placeholder.
+INJECTED_CALL_SIGNATURE = b"skip_thought_signature_validator"
+
 STOP_MESSAGE = ("I stopped after {n} steps without finishing (the step limit for one request). "
                 "Nothing was changed. Please ask about fewer claims at a time, or try again.")
 
@@ -49,7 +57,8 @@ INSTRUCTION = """You are the expense and travel policy copilot for employees.
 Route: {route}
 
 For a policy question: call search_policy, then answer in 1-4 sentences using only the passages,
-citing passage IDs in brackets, e.g. [POL-MEALS#1].
+citing passage IDs in brackets, e.g. [POL-MEALS#1]. If the passages do not answer the question,
+reply with exactly NOT_IN_POLICY and nothing else.
 
 For a claim task:
 1. First write a short numbered plan (one line per step: which tool, for which claim).
@@ -159,6 +168,11 @@ def after_model(callback_context: CallbackContext, llm_response: LlmResponse) ->
     state = _run_state(callback_context)
     if not answer or state["fixed_reply"]:
         return None
+    if answer.strip().startswith(NOT_IN_POLICY):  # spec 005: a refusal needs no citation
+        trace_event("guardrail.output.refusal")
+        state["fixed_reply"] = True
+        callback_context.state[STATE] = state
+        return LlmResponse(content=types.Content(role="model", parts=[types.Part(text=REFUSAL)]))
     problems = guardrails.grounding_problems(answer, state["tool_output"])
     if not problems:
         return None
@@ -169,7 +183,8 @@ def after_model(callback_context: CallbackContext, llm_response: LlmResponse) ->
         trace_event("guardrail.output.revise", problems=" | ".join(problems))
         return LlmResponse(content=types.Content(role="model", parts=[types.Part(
             function_call=types.FunctionCall(id=f"review-{uuid.uuid4().hex[:8]}",
-                                             name="review_answer", args={"problems": problems}))]))
+                                             name="review_answer", args={"problems": problems}),
+            thought_signature=INJECTED_CALL_SIGNATURE)]))
     trace_event("guardrail.output.unresolved", problems=" | ".join(problems))
     note = "\n\nNote: automatic review still found problems: " + " ".join(problems)
     return LlmResponse(content=types.Content(role="model", parts=[types.Part(text=answer + note)]))
