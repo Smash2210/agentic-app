@@ -105,6 +105,21 @@
         "title": "Adjudication",
         "type": "object"
       },
+      "AskRequest": {
+        "properties": {
+          "question": {
+            "description": "A question about the travel and expense policy, in your own words (at most 500 characters).",
+            "maxLength": 500,
+            "title": "Question",
+            "type": "string"
+          }
+        },
+        "required": [
+          "question"
+        ],
+        "title": "AskRequest",
+        "type": "object"
+      },
       "Category": {
         "enum": [
           "meal",
@@ -822,6 +837,49 @@
         "summary": "Adjudicate receipts",
         "tags": [
           "adjudicate"
+        ]
+      }
+    },
+    "/ask": {
+      "post": {
+        "description": "Answer a question about the travel and expense policy, streamed as Server-Sent Events: `token` events with text as it is written, one `citations` event (the policy passages the answer cites, any `unverified` citations, `grounded`, `refused`), then `done`. Answers use only policy passages found by hybrid search (keywords + meaning) and cite them inline as [POL-XXX#n]. If the policy does not answer the question, the answer is a fixed refusal. An error after streaming has started is sent as an `error` event.",
+        "operationId": "ask_ask_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AskRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "text/event-stream": {
+                "example": "event: token\ndata: \"No. Minibar charges are not reimbursable [POL-LODGING#4].\"\n\nevent: citations\ndata: {\"citations\": [{\"id\": \"POL-LODGING#4\", \"document\": \"Lodging Policy\", \"section\": \"What is not covered\", \"similarity\": 0.716}], \"unverified\": [], \"grounded\": true, \"refused\": false, \"question_similarity\": 0.716, \"model\": \"gemini-3.5-flash-lite\"}\n\nevent: done\ndata: {}\n\n"
+              }
+            },
+            "description": "The answer as a Server-Sent Events stream."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "description": "The model is not configured or still unavailable after retries."
+          }
+        },
+        "summary": "Ask the policy",
+        "tags": [
+          "policy"
         ]
       }
     },

@@ -20,15 +20,21 @@ starts, so `ModelUnavailable` can still be a 503; phase 2 streams as `text/event
   cosine over 40 × 256 numbers takes microseconds, and the vectors fit in a ~100 KB JSON file.
   Chroma or another vector DB would add a heavy dependency for nothing at this size (Principle VI).
   At scale, the managed equivalent is **Vertex AI Vector Search** (ANN index, also supports hybrid
-  search), behind the same `PolicyIndex.search()` interface. ADR 0001 is updated.
+  search), behind the same `PolicyIndex.search()` interface.
 - **256 dimensions** (Matryoshka truncation of `gemini-embedding-001`): smaller cache, and enough for
   ~40 passages. Documents are embedded with `RETRIEVAL_DOCUMENT`, questions with `RETRIEVAL_QUERY`.
-- **The refusal decision belongs to code**, from the embedding similarity of the best passage, not
-  the model. RRF scores are rank-based and say nothing about absolute relevance, so they cannot be
-  thresholded. The threshold is set from the evaluation (FR-308) between the answerable and
-  unanswerable questions' best similarities.
-- **New dependency: `rank-bm25`** (pure Python, BM25Okapi). The alternative, writing BM25 by hand, is
-  about 30 lines, but a reviewed library is less to get wrong. No numpy: vectors are plain lists.
+- **Refusal in two layers, one refusal text written by code.** RRF scores are rank-based and say
+  nothing about absolute relevance, so the gate uses the embedding similarity of the question's best
+  passage. The evaluation showed it cannot separate the classes on its own: weakest answerable 0.716,
+  strongest unanswerable 0.710 ("vacation days"). So:
+  (1) **gate**: below 0.70, refuse without any model call (catches clearly off-topic questions, with
+  a 0.016 margin under every answerable one);
+  (2) **model judgement**: for questions that pass the gate, the model must reply exactly
+  `NOT_IN_POLICY` if the passages do not answer; the code holds back the first streamed characters to
+  spot it, and sends the fixed refusal instead.
+- **New dependency: `rank-bm25`** (BM25Okapi). The alternative, writing BM25 by hand, is about 30
+  lines, but a reviewed library is less to get wrong. It brings **numpy** with it; our own code still
+  uses plain lists for vectors (40 × 256 numbers need nothing faster).
 - **Streaming retry**: `llm.generate_content_stream()` retries and falls back like
   `generate_content()`, but only until the first chunk arrives; after that, an error ends the stream
   with an `error` event.
@@ -42,4 +48,4 @@ starts, so `ModelUnavailable` can still be a 503; phase 2 streams as `text/event
 | III Deterministic core | No money decisions here; the refusal gate is code, not the model |
 | IV Money | Not touched |
 | V Test-first, offline | Model and embeddings faked in tests; the passage embeddings load from the committed cache |
-| VI Simplicity | One dependency (`rank-bm25`); no vector DB, no numpy |
+| VI Simplicity | One direct dependency (`rank-bm25`, which brings numpy); no vector DB |

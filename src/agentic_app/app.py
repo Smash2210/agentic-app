@@ -37,6 +37,7 @@ def create_app(db_path: Path, policy_dir: Path) -> FastAPI:
     )
     app.state.policy = policy
     app.state.db_path = Path(db_path)
+    app.state.policy_dir = Path(policy_dir)
     app.include_router(router)
     return app
 

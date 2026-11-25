@@ -69,26 +69,18 @@ def generate(prompt:str, *, system: str | None = None) -> str:
         raise RuntimeError(f"Gemini returned no text (model={model_name}).")
     return response.text
 
-def generate_content(
-    contents, config: types.GenerateContentConfig, *, prefer: str | None = None
-) -> types.GenerateContentResponse:
-    """One model call. Temporary errors are retried with backoff, then the next fallback model is
-    tried; any other error is raised at once. `prefer` (a model that already answered in this
-    conversation) is tried first. The response's model_version is set to the model that answered."""
+def _with_retries(call, names: list[str]):
+    """Run call(client, model) for each model in turn: temporary errors are retried with backoff,
+    then the next model is tried; any other error is raised at once. Returns (result, model)."""
     try:
-        names = models()
         client = get_client()
-    except ValueError as exc:  # no model name or no API key
+    except ValueError as exc:  # no API key
         raise ModelUnavailable(f"model not configured: {exc}") from exc
-    if prefer in names:
-        names = [prefer] + [n for n in names if n != prefer]
     failures = []
     for model in names:
         for attempt in range(len(BACKOFF_S) + 1):
             try:
-                response = client.models.generate_content(model=model, contents=contents, config=config)
-                response.model_version = model  # the name we asked for, so callers can prefer it
-                return response
+                return call(client, model), model
             except (errors.APIError, *TRANSPORT_ERRORS) as exc:
                 if isinstance(exc, errors.APIError) and exc.code not in TRANSIENT_CODES:
                     raise
@@ -100,3 +92,55 @@ def generate_content(
     raise ModelUnavailable(
         f"model unavailable after {len(BACKOFF_S) + 1} tries each: {', '.join(failures)}"
     )
+
+
+def _ordered_models(prefer: str | None) -> list[str]:
+    try:
+        names = models()
+    except ValueError as exc:  # no model name
+        raise ModelUnavailable(f"model not configured: {exc}") from exc
+    return [prefer] + [n for n in names if n != prefer] if prefer in names else names
+
+
+def generate_content(
+    contents, config: types.GenerateContentConfig, *, prefer: str | None = None
+) -> types.GenerateContentResponse:
+    """One model call, with retries and fallback models (_with_retries). `prefer` (a model that
+    already answered in this conversation) is tried first. The response's model_version is set to
+    the model that answered."""
+    response, model = _with_retries(
+        lambda client, m: client.models.generate_content(model=m, contents=contents, config=config),
+        _ordered_models(prefer),
+    )
+    response.model_version = model  # the name we asked for, so callers can prefer it
+    return response
+
+
+def generate_content_stream(contents, config: types.GenerateContentConfig, *, prefer: str | None = None):
+    """Stream a model answer. Retries and fallbacks apply only until the first chunk arrives; an
+    error after that is raised to the caller, who has already started sending the answer."""
+
+    def first_chunk(client, model):
+        stream = iter(client.models.generate_content_stream(model=model, contents=contents, config=config))
+        return next(stream, None), stream
+
+    (first, stream), model = _with_retries(first_chunk, _ordered_models(prefer))
+    if first is not None:
+        first.model_version = model
+        yield first
+    for chunk in stream:
+        chunk.model_version = model
+        yield chunk
+
+
+def embed(texts: list[str], *, model: str, task_type: str, dimensions: int) -> list[list[float]]:
+    """Embedding vectors for texts, with the same retries (no fallback: vectors from different
+    models cannot be compared)."""
+    result, _ = _with_retries(
+        lambda client, m: client.models.embed_content(
+            model=m, contents=texts,
+            config=types.EmbedContentConfig(task_type=task_type, output_dimensionality=dimensions),
+        ),
+        [model],
+    )
+    return [list(e.values) for e in result.embeddings]

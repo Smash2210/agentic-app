@@ -33,9 +33,12 @@ refusal. Live: the questions in `data/golden/retrieval.jsonl`.
   combined with Reciprocal Rank Fusion. It returns the top 5 passages with their scores.
 - **FR-303** Retrieval is offered to the model **as a tool** (`search_policy(query)`); the model
   decides what to search for. If the model does not search, the question itself is searched.
-- **FR-304** **Refusal**: if no retrieved passage is similar enough to the question (best embedding
-  similarity below a threshold set from the evaluation, FR-308), the answer is a fixed refusal
-  ("I can't answer that from the travel and expense policy …"), written by code, not the model.
+- **FR-304** **Refusal**: the answer is a fixed refusal ("I can't answer that from the travel and
+  expense policy …"), written by code, not the model, when either (a) no passage is similar enough
+  to the question (best embedding similarity below a threshold set from the evaluation, FR-308; no
+  model is called), or (b) the model judges that the retrieved passages do not answer it. (Amended
+  2026-11-25 after the evaluation showed similarity alone cannot separate answerable from
+  unanswerable questions safely.)
 - **FR-305** **Grounding**: the answer may use only the retrieved passages, and cites them inline as
   `[POL-XXX#n]`. Citations of passages that were not retrieved are reported as `unverified`. An answer
   with no valid citation is marked `grounded: false`.

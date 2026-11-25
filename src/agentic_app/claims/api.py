@@ -5,6 +5,7 @@ from collections.abc import Iterator
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request
+from fastapi.responses import StreamingResponse
 
 from agentic_app.claims import store
 from agentic_app.claims.policy import Policy
@@ -12,6 +13,7 @@ from agentic_app.claims.rules import check_claim
 from agentic_app.schemas import (
     AdjudicateRequest,
     Adjudication,
+    AskRequest,
     CheckResult,
     Claim,
     ClaimIn,
@@ -156,3 +158,46 @@ def adjudicate_receipts(body: AdjudicateRequest, conn: Conn, policy: CurrentPoli
         return adjudicate(body, prior, policy)
     except ModelUnavailable as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+_SSE_EXAMPLE = (
+    'event: token\ndata: "No. Minibar charges are not reimbursable [POL-LODGING#4]."\n\n'
+    'event: citations\ndata: {"citations": [{"id": "POL-LODGING#4", "document": "Lodging Policy", '
+    '"section": "What is not covered", "similarity": 0.716}], "unverified": [], "grounded": true, '
+    '"refused": false, "question_similarity": 0.716, "model": "gemini-3.5-flash-lite"}\n\n'
+    'event: done\ndata: {}\n\n'
+)
+
+
+@router.post(
+    "/ask",
+    tags=["policy"],
+    summary="Ask the policy",
+    description=(
+        "Answer a question about the travel and expense policy, streamed as Server-Sent Events: "
+        "`token` events with text as it is written, one `citations` event (the policy passages the "
+        "answer cites, any `unverified` citations, `grounded`, `refused`), then `done`. Answers use "
+        "only policy passages found by hybrid search (keywords + meaning) and cite them inline as "
+        "[POL-XXX#n]. If the policy does not answer the question, the answer is a fixed refusal. "
+        "An error after streaming has started is sent as an `error` event."
+    ),
+    response_class=StreamingResponse,
+    responses={
+        200: {"description": "The answer as a Server-Sent Events stream.",
+              "content": {"text/event-stream": {"example": _SSE_EXAMPLE}}},
+        503: {"description": "The model is not configured or still unavailable after retries."},
+    },
+)
+def ask(body: AskRequest, request: Request) -> StreamingResponse:
+    """Grounded, cited policy Q&A (spec 003)."""
+    # Imported here so the Claims API can start without loading .env or the Gemini SDK (M02 U1).
+    from agentic_app.llm import ModelUnavailable
+    from agentic_app.rag.ask import AskSession, get_index
+
+    session = AskSession(body.question, get_index(request.app))
+    try:
+        session.prepare()  # search and gate happen before the response starts
+    except ModelUnavailable as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return StreamingResponse(session.events(), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-cache"})
