@@ -1,0 +1,20 @@
+{"id": "q01", "question": "Can I claim the minibar from my hotel bill?", "relevant": ["POL-LODGING#4"], "answerable": true}
+{"id": "q02", "question": "What is the daily limit for meals?", "relevant": ["POL-MEALS#1"], "answerable": true}
+{"id": "q03", "question": "How much is the per diem in London?", "relevant": ["POL-PERDIEM#1"], "answerable": true}
+{"id": "q04", "question": "Do I need a receipt for a 20 dollar taxi ride?", "relevant": ["POL-RECEIPTS#1"], "answerable": true}
+{"id": "q05", "question": "Can I fly business class on a 13-hour flight to Singapore?", "relevant": ["POL-BOOKING#3"], "answerable": true}
+{"id": "q06", "question": "Is wine at a dinner with a client reimbursable?", "relevant": ["POL-ENTERTAIN#3", "POL-MEALS#2"], "answerable": true}
+{"id": "q07", "question": "How long do I have to submit my expense claim after a trip?", "relevant": ["POL-APPROVALS#1"], "answerable": true}
+{"id": "q08", "question": "Who has to approve a claim of 3,000 dollars?", "relevant": ["POL-APPROVALS#2"], "answerable": true}
+{"id": "q09", "question": "I lost a receipt. Can I sign a declaration instead?", "relevant": ["POL-EXCEPTIONS#2", "POL-RECEIPTS#2"], "answerable": true}
+{"id": "q10", "question": "What rate do I get for driving my own car for work?", "relevant": ["POL-TRANSPORT#3"], "answerable": true}
+{"id": "q11", "question": "Can I take a taxi from the airport to the hotel?", "relevant": ["POL-TRANSPORT#1"], "answerable": true}
+{"id": "q12", "question": "Lunch was included in the conference fee. Can I still claim lunch?", "relevant": ["POL-CONFERENCE#2", "POL-MEALS#2"], "answerable": true}
+{"id": "q13", "question": "Which exchange rate is used for expenses in euros?", "relevant": ["POL-CURRENCY#2"], "answerable": true}
+{"id": "q14", "question": "Can I claim my mobile data roaming charges?", "relevant": ["POL-NONREIMB#3"], "answerable": true}
+{"id": "q15", "question": "Should I buy travel insurance for a business trip?", "relevant": ["POL-SAFETY#2"], "answerable": true}
+{"id": "q16", "question": "What happens if my hotel costs more than the nightly cap?", "relevant": ["POL-LODGING#3", "POL-LODGING#1"], "answerable": true}
+{"id": "q17", "question": "How many vacation days do I get per year?", "relevant": [], "answerable": false}
+{"id": "q18", "question": "What is the parental leave policy?", "relevant": [], "answerable": false}
+{"id": "q19", "question": "When are performance reviews held?", "relevant": [], "answerable": false}
+{"id": "q20", "question": "What is the dress code in the office?", "relevant": [], "answerable": false}
