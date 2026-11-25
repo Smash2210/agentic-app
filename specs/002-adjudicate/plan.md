@@ -33,7 +33,7 @@ and measured over repeated runs for the evidence.
 
 ## Resilience
 
-`llm.generate_content()` retries 429/500/503 with backoff (5, 10 s: 3 tries per model), because
+`llm.generate_content()` retries 429/500/503/504 with backoff (5, 10 s: 3 tries per model), because
 free-tier models often answer 503 ("high demand"). It then moves on to the next model in
 `GEMINI_FALLBACK_MODELS`, a comma-separated list after `GEMINI_MODEL`. Within one adjudication, later
 calls go to the model that already answered first (`prefer=`), so a busy primary is not retried on

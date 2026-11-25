@@ -1,0 +1,107 @@
+{
+  "decision": "partial",
+  "review_reasons": [],
+  "lines": [
+    {
+      "line_no": 1,
+      "date": "2026-04-20",
+      "category": "transport",
+      "merchant": "ADDISON LEE",
+      "amount": "48.00",
+      "currency": "GBP",
+      "receipt_attached": true,
+      "nights": null
+    },
+    {
+      "line_no": 2,
+      "date": "2026-04-21",
+      "category": "transport",
+      "merchant": "ADDISON LEE",
+      "amount": "51.50",
+      "currency": "GBP",
+      "receipt_attached": true,
+      "nights": null
+    },
+    {
+      "line_no": 3,
+      "date": "2026-04-20",
+      "category": "meal",
+      "merchant": "DISHOOM KINGS CROSS",
+      "amount": "70.00",
+      "currency": "GBP",
+      "receipt_attached": true,
+      "nights": null
+    }
+  ],
+  "check": {
+    "claim_id": 0,
+    "lines": [
+      {
+        "line_no": 1,
+        "claimed_usd": "60.96",
+        "reimbursable_usd": "60.96",
+        "rejected_usd": "0.00",
+        "flagged_for_review": false
+      },
+      {
+        "line_no": 2,
+        "claimed_usd": "65.41",
+        "reimbursable_usd": "65.41",
+        "rejected_usd": "0.00",
+        "flagged_for_review": false
+      },
+      {
+        "line_no": 3,
+        "claimed_usd": "88.90",
+        "reimbursable_usd": "75.00",
+        "rejected_usd": "13.90",
+        "flagged_for_review": false
+      }
+    ],
+    "violations": [
+      {
+        "rule_id": "MEALS_DAILY_LIMIT",
+        "line_nos": [
+          3
+        ],
+        "date": "2026-04-20",
+        "excess_usd": "13.90",
+        "message": "Meals on 2026-04-20: 88.90 USD is over the daily limit of 75.00 USD; 13.90 USD rejected.",
+        "citation": {
+          "doc_id": "POL-MEALS",
+          "sections": [
+            "1",
+            "3"
+          ]
+        }
+      }
+    ],
+    "per_diem": {
+      "city": "London",
+      "daily_rate_usd": "70.00",
+      "days": 2,
+      "amount_usd": "105.00",
+      "citation": {
+        "doc_id": "POL-PERDIEM",
+        "sections": [
+          "1",
+          "2"
+        ]
+      }
+    },
+    "lines_reimbursable_usd": "201.37",
+    "total_reimbursable_usd": "306.37"
+  },
+  "flags": [],
+  "unreadable": [],
+  "explanation": "Your transport expenses of 48.00 GBP (60.96 USD) and 51.50 GBP (65.41 USD) with Addison Lee were fully approved. The meal expense of 70.00 GBP (88.90 USD) at Dishoom Kings Cross on 2026-04-20 exceeded the daily meal limit of 75.00 USD under POL-MEALS §1. Therefore, 13.90 USD was rejected for that meal under POL-MEALS §3. You also receive a per diem allowance of 105.00 USD for your trip to London under POL-PERDIEM §1 and POL-PERDIEM §2. In total, your reimbursable amount is 306.37 USD.",
+  "usage": {
+    "model": "gemini-3.5-flash-lite, gemini-3.5-flash",
+    "model_calls": 3,
+    "prompt_tokens": 8292,
+    "cached_tokens": 0,
+    "thoughts_tokens": 1909,
+    "output_tokens": 586,
+    "latency_ms": 67476
+  }
+}

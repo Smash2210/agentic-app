@@ -1,0 +1,73 @@
+{
+  "decision": "approve",
+  "review_reasons": [],
+  "lines": [
+    {
+      "line_no": 1,
+      "date": "2026-04-20",
+      "category": "transport",
+      "merchant": "Addison Lee",
+      "amount": "48.00",
+      "currency": "GBP",
+      "receipt_attached": true,
+      "nights": null
+    },
+    {
+      "line_no": 2,
+      "date": "2026-04-21",
+      "category": "transport",
+      "merchant": "Addison Lee",
+      "amount": "51.50",
+      "currency": "GBP",
+      "receipt_attached": true,
+      "nights": null
+    }
+  ],
+  "check": {
+    "claim_id": 0,
+    "lines": [
+      {
+        "line_no": 1,
+        "claimed_usd": "60.96",
+        "reimbursable_usd": "60.96",
+        "rejected_usd": "0.00",
+        "flagged_for_review": false
+      },
+      {
+        "line_no": 2,
+        "claimed_usd": "65.41",
+        "reimbursable_usd": "65.41",
+        "rejected_usd": "0.00",
+        "flagged_for_review": false
+      }
+    ],
+    "violations": [],
+    "per_diem": {
+      "city": "London",
+      "daily_rate_usd": "70.00",
+      "days": 2,
+      "amount_usd": "105.00",
+      "citation": {
+        "doc_id": "POL-PERDIEM",
+        "sections": [
+          "1",
+          "2"
+        ]
+      }
+    },
+    "lines_reimbursable_usd": "126.37",
+    "total_reimbursable_usd": "231.37"
+  },
+  "flags": [],
+  "unreadable": [],
+  "explanation": "Your claim for the business trip to London from 2026-04-20 to 2026-04-21 has been processed. The Addison Lee transport expenses of 48.00 GBP and 51.50 GBP were converted to 60.96 USD and 65.41 USD respectively per POL-CURRENCY §2 and are fully reimbursable. Under POL-PERDIEM §1 and POL-PERDIEM §2, you receive a per diem allowance of 105.00 USD for the 2 travel days in London at the daily rate of 70.00 USD. The total reimbursable amount for your claim is 231.37 USD.",
+  "usage": {
+    "model": "gemini-3.5-flash",
+    "model_calls": 3,
+    "prompt_tokens": 7000,
+    "cached_tokens": 0,
+    "thoughts_tokens": 755,
+    "output_tokens": 459,
+    "latency_ms": 42081
+  }
+}

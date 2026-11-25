@@ -8,8 +8,8 @@ from google.genai import errors, types
 
 load_dotenv()
 
-# Temporary errors worth retrying: rate limit, server error, overloaded ("high demand").
-TRANSIENT_CODES = (429, 500, 503)
+# Temporary errors worth retrying: rate limit, server error, overloaded ("high demand"), deadline expired.
+TRANSIENT_CODES = (429, 500, 503, 504)
 
 
 def _transport_errors() -> tuple[type[Exception], ...]:
