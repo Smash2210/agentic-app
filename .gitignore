@@ -16,3 +16,4 @@ mutants/
 .coverage
 review-verdict.md
 .DS_Store
+evals/traces.jsonl
