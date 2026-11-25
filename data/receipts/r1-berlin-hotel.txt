@@ -1,0 +1,13 @@
+HOTEL SPREE BERLIN
+Friedrichstr. 12, 10117 Berlin
+Guest: E-001            Folio 4471
+Arrival 10.03.2026      Departure 13.03.2026      Nights: 3
+
+10.03  Room                          150.00 EUR
+11.03  Room                          150.00 EUR
+12.03  Room                          150.00 EUR
+       City tax (5%) x 3              22.50 EUR
+12.03  Minibar                        14.00 EUR
+
+TOTAL                                486.50 EUR
+Paid by card ****1234

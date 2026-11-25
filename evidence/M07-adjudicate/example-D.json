@@ -1,0 +1,23 @@
+{
+  "decision": "needs_human_review",
+  "review_reasons": [
+    "no expense lines could be checked",
+    "unreadable: Receipt 1: Date is unreadable and amount is incomplete."
+  ],
+  "lines": [],
+  "check": null,
+  "flags": [],
+  "unreadable": [
+    "Receipt 1: Date is unreadable and amount is incomplete."
+  ],
+  "explanation": "No valid expense lines could be read from the provided receipt because the date and amount were smudged and incomplete. Per company guidelines, unreadable receipts cannot be processed or reimbursed. Consequently, check_claim was not called and no expenses were submitted.",
+  "usage": {
+    "model": "gemini-3.5-flash-lite",
+    "model_calls": 2,
+    "prompt_tokens": 3852,
+    "cached_tokens": 0,
+    "thoughts_tokens": 525,
+    "output_tokens": 179,
+    "latency_ms": 16141
+  }
+}

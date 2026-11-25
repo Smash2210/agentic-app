@@ -1,0 +1,107 @@
+{
+  "decision": "partial",
+  "review_reasons": [],
+  "lines": [
+    {
+      "line_no": 1,
+      "date": "2026-04-20",
+      "category": "transport",
+      "merchant": "Addison Lee",
+      "amount": "48.00",
+      "currency": "GBP",
+      "receipt_attached": true,
+      "nights": null
+    },
+    {
+      "line_no": 2,
+      "date": "2026-04-21",
+      "category": "transport",
+      "merchant": "Addison Lee",
+      "amount": "51.50",
+      "currency": "GBP",
+      "receipt_attached": true,
+      "nights": null
+    },
+    {
+      "line_no": 3,
+      "date": "2026-04-20",
+      "category": "meal",
+      "merchant": "Dishoom Kings Cross",
+      "amount": "70.00",
+      "currency": "GBP",
+      "receipt_attached": true,
+      "nights": null
+    }
+  ],
+  "check": {
+    "claim_id": 0,
+    "lines": [
+      {
+        "line_no": 1,
+        "claimed_usd": "60.96",
+        "reimbursable_usd": "60.96",
+        "rejected_usd": "0.00",
+        "flagged_for_review": false
+      },
+      {
+        "line_no": 2,
+        "claimed_usd": "65.41",
+        "reimbursable_usd": "65.41",
+        "rejected_usd": "0.00",
+        "flagged_for_review": false
+      },
+      {
+        "line_no": 3,
+        "claimed_usd": "88.90",
+        "reimbursable_usd": "75.00",
+        "rejected_usd": "13.90",
+        "flagged_for_review": false
+      }
+    ],
+    "violations": [
+      {
+        "rule_id": "MEALS_DAILY_LIMIT",
+        "line_nos": [
+          3
+        ],
+        "date": "2026-04-20",
+        "excess_usd": "13.90",
+        "message": "Meals on 2026-04-20: 88.90 USD is over the daily limit of 75.00 USD; 13.90 USD rejected.",
+        "citation": {
+          "doc_id": "POL-MEALS",
+          "sections": [
+            "1",
+            "3"
+          ]
+        }
+      }
+    ],
+    "per_diem": {
+      "city": "London",
+      "daily_rate_usd": "70.00",
+      "days": 2,
+      "amount_usd": "105.00",
+      "citation": {
+        "doc_id": "POL-PERDIEM",
+        "sections": [
+          "1",
+          "2"
+        ]
+      }
+    },
+    "lines_reimbursable_usd": "201.37",
+    "total_reimbursable_usd": "306.37"
+  },
+  "flags": [],
+  "unreadable": [],
+  "explanation": "Your claim for your trip to London from 2026-04-20 to 2026-04-21 has been checked and accepted with minor adjustments. The transport journeys on Receipt 1 are fully reimbursable under the company travel policy. Your meal expense on Receipt 2 on 2026-04-20 of 70.00 GBP converted to 88.90 USD, which exceeded the daily meal limit of 75.00 USD under POL-MEALS §1 and §3, resulting in a rejection of 13.90 USD for that day. Finally, you are entitled to a daily incidentals per diem of 105.00 USD for your two-day trip to London under POL-PERDIEM §1 and §2.",
+  "usage": {
+    "model": "gemini-3.5-flash-lite",
+    "model_calls": 3,
+    "prompt_tokens": 8396,
+    "cached_tokens": 0,
+    "thoughts_tokens": 1476,
+    "output_tokens": 541,
+    "latency_ms": 17208
+  }
+}

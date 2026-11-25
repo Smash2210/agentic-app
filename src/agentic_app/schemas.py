@@ -330,3 +330,76 @@ class NotFound(BaseModel):
     """Error body when no claim has the requested ID."""
 
     detail: Annotated[str, Field(description="What was not found, e.g. Claim 99 not found.")]
+
+
+# --- adjudication (spec 002) --------------------------------------------------------------------
+
+MAX_RECEIPTS = 10
+MAX_RECEIPT_TEXT = 5000
+
+ReceiptText = Annotated[NonBlankStr, Field(max_length=MAX_RECEIPT_TEXT)]
+
+
+class Decision(StrEnum):
+    APPROVE = "approve"
+    PARTIAL = "partial"
+    REJECT = "reject"
+    NEEDS_HUMAN_REVIEW = "needs_human_review"
+
+
+class AdjudicateRequest(BaseModel):
+    employee_id: Annotated[EmployeeId, Field(description=(
+        "Employee the receipts belong to, e.g. E-001; trimmed. Their stored claims are used to "
+        "spot duplicates."
+    ))]
+    trip: Annotated[Trip, Field(description="The trip the receipts belong to.")]
+    receipts: Annotated[list[ReceiptText], Field(min_length=1, max_length=MAX_RECEIPTS, description=(
+        "Receipts as plain text, one string per receipt (1 to 10, each at most 5,000 characters)."
+    ))]
+
+
+class Flag(BaseModel):
+    receipt: Annotated[int, Field(ge=1, description="Receipt number, from 1, in request order.")]
+    item: Annotated[str, Field(description="The item as it appears on the receipt.")]
+    reason: Annotated[str, Field(description="Why it was left out of the lines.")]
+    citation: Annotated[str, Field(description="Policy section, e.g. POL-LODGING §4.")]
+
+
+class ModelUsage(BaseModel):
+    model: Annotated[str, Field(description=(
+        "Model(s) that answered, comma-separated if a fallback model was used."
+    ))]
+    model_calls: Annotated[int, Field(description="Model calls made for this request.")]
+    prompt_tokens: Annotated[int, Field(description="Input tokens, summed over calls.")]
+    cached_tokens: Annotated[int, Field(description="Input tokens served from the model's cache.")]
+    thoughts_tokens: Annotated[int, Field(description="Reasoning tokens, summed over calls.")]
+    output_tokens: Annotated[int, Field(description="Output tokens, summed over calls.")]
+    latency_ms: Annotated[int, Field(description="Time spent in model calls, milliseconds.")]
+
+
+class Adjudication(BaseModel):
+    decision: Annotated[Decision, Field(description=(
+        "Set by code, never by the model: needs_human_review if anything is flagged, unreadable "
+        "or invalid; otherwise reject (nothing reimbursable), partial (anything rejected or any "
+        "violation) or approve."
+    ))]
+    review_reasons: Annotated[list[str], Field(description=(
+        "Why the decision is needs_human_review; empty otherwise."
+    ))]
+    lines: Annotated[list[ExpenseLine], Field(description=(
+        "Expense lines read from the receipts, as checked. Empty if none could be checked."
+    ))]
+    check: Annotated[CheckResult | None, Field(description=(
+        "The policy check of `lines`, exactly as GET /claims/{id}/check computes it. Every amount "
+        "in this response comes from here. Null if no lines could be checked."
+    ))]
+    flags: Annotated[list[Flag], Field(description=(
+        "Items left out because the policy excludes them but the check cannot see them."
+    ))]
+    unreadable: Annotated[list[str], Field(description=(
+        "Receipts, or parts of them, that could not be read with confidence."
+    ))]
+    explanation: Annotated[str, Field(description=(
+        "Short explanation for the employee, citing policy sections."
+    ))]
+    usage: Annotated[ModelUsage, Field(description="Model usage for this request.")]
