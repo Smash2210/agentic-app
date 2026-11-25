@@ -33,8 +33,11 @@
 - **Tracing to a file.** ADK already emits OpenTelemetry spans (`invoke_agent`, `generate_content`,
   `execute_tool`); we add a provider and a file exporter, no hosted service. Phoenix or Langfuse
   could read the same spans over OTLP later.
-- **No new dependencies.** `opentelemetry-sdk` and `google-cloud-aiplatform` already come with
-  `google-adk`.
+- **Dependencies.** `opentelemetry-sdk` already comes with `google-adk`. `google-cloud-aiplatform`
+  was transitive at 1.91, whose `AdkApp` template calls ADK 2's now-async `create_session` and
+  fails; it becomes a direct dependency `google-cloud-aiplatform[agent_engines]>=2.10` (the deploy
+  config needs it). Its `AdkApp.set_up()` always switches to the Vertex AI backend, so the local dry
+  run builds and serializes the `AdkApp` but queries `root_agent` through ADK's own runner.
 
 ## Constitution check
 
