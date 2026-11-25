@@ -150,6 +150,9 @@ def after_tool(tool, args: dict, tool_context, tool_response: dict) -> dict | No
 
 
 def after_model(callback_context: CallbackContext, llm_response: LlmResponse) -> LlmResponse | None:
+    parts = llm_response.content.parts if llm_response.content and llm_response.content.parts else []
+    trace_event("model.output", text=_text(llm_response)[:4000], calls=json.dumps(
+        [{"name": p.function_call.name, "args": p.function_call.args} for p in parts if p.function_call]))
     if llm_response.partial or _has_call(llm_response):
         return None
     answer = _text(llm_response)

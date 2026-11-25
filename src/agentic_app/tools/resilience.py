@@ -12,6 +12,7 @@ fail on every attempt (read on each call, so a test or a live run can set it at 
 """
 
 import functools
+import json
 import logging
 import os
 import time
@@ -55,12 +56,14 @@ def resilient(tool: str, *, timeout_s: float, fallback: str):
             for attempt in range(1, MAX_ATTEMPTS + 1):
                 with tracer.start_as_current_span("tool.attempt") as span:
                     span.set_attributes({"tool.name": tool, "tool.attempt": attempt,
-                                         "tool.fault": injected_fault(tool) or ""})
+                                         "tool.fault": injected_fault(tool) or "",
+                                         "tool.args": json.dumps(kwargs or list(args), default=str)})
                     try:
                         future = _executor.submit(body, *args, **kwargs)
                         try:
                             result = future.result(timeout=timeout_s)
-                            span.set_attribute("tool.status", result.get("status", "ok"))
+                            span.set_attributes({"tool.status": result.get("status", "ok"),
+                                                 "tool.result": json.dumps(result, default=str)[:4000]})
                             return result
                         except FutureTimeout:
                             future.cancel()
