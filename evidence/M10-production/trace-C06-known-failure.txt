@@ -1,0 +1,20 @@
+trace 0x27d73b19da041f9656f24c8c70f2a161
+eval.case (14640 ms) {"eval.case_id": "C06", "eval.mode": "live", "eval.passed": false, "eval.failures": "answer: answer failed the grounding check twice; judge: 3/5 The answer correctly reports that claim 99 was not found, but misses the required policy citation."}
+  invoke_workflow claims_agent (12222 ms) 
+    invoke_agent claims_agent (12220 ms) 
+      generate_content recording (8943 ms) {"gen_ai.request.model": "recording"}
+      • model.output {"text": "", "calls": "[{\"name\": \"get_claim\", \"args\": {\"claim_id\": 99}}, {\"name\": \"check_claim\", \"args\": {\"claim_id\": 99}}, {\"name\": \"search_policy\", \"args\": {\"query\": \"claim 99\"}}]"}
+      execute_tool get_claim (3 ms) [ERROR] {"gen_ai.tool.name": "get_claim", "error.type": "TOOL_ERROR"}
+        tool.attempt (1 ms) {"tool.name": "get_claim", "tool.attempt": 1, "tool.fault": "", "tool.args": "{\"claim_id\": 99}", "tool.status": "error", "error.type": "ToolBadInput", "error.message": "claim 99 not found"}
+      execute_tool check_claim (2 ms) [ERROR] {"gen_ai.tool.name": "check_claim", "error.type": "TOOL_ERROR"}
+        tool.attempt (1 ms) {"tool.name": "check_claim", "tool.attempt": 1, "tool.fault": "", "tool.args": "{\"claim_id\": 99}", "tool.status": "error", "error.type": "ToolBadInput", "error.message": "claim 99 not found"}
+      execute_tool search_policy (504 ms) {"gen_ai.tool.name": "search_policy"}
+        tool.attempt (502 ms) {"tool.name": "search_policy", "tool.attempt": 1, "tool.fault": "", "tool.args": "{\"query\": \"claim 99\"}", "tool.status": "ok", "tool.result": "{\"status\": \"ok\", \"passages\": [{\"id\": \"POL-APPROVALS#3\", \"title\": \"Claim Submission and Approval Policy \\u2014 Conflicts of interest\", \"text\": \"Nobody may approve their own claim, or a claim for a trip they
+      execute_tool (merged) (0 ms) {"gen_ai.tool.name": "(merged tools)"}
+      generate_content recording (1149 ms) {"gen_ai.request.model": "recording"}
+      • model.output {"text": "1. Get claim 99\n2. Check claim 99 against the expense policy\n\nClaim 99 could not be loaded or checked because it was not found in the system.", "calls": "[]"}
+      • guardrail.output.revise {"problems": "The answer cites no policy reference returned by the tools; cite one of: POL-APPROVALS, POL-RECEIPTS."}
+      execute_tool review_answer (0 ms) {"gen_ai.tool.name": "review_answer"}
+      generate_content recording (1603 ms) {"gen_ai.request.model": "recording"}
+      • model.output {"text": "1. Load claim 99 using `get_claim`.\n2. Check claim 99 using `check_claim`.\n\nClaim 99 could not be loaded and checked because it was not found in the system.", "calls": "[]"}
+      • guardrail.output.unresolved {"problems": "The answer cites no policy reference returned by the tools; cite one of: POL-APPROVALS, POL-RECEIPTS."}

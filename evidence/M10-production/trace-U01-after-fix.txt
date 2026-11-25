@@ -1,0 +1,11 @@
+trace 0x1288fc74cdc88de2e537805209f18501
+eval.case (10314 ms) {"eval.case_id": "U01", "eval.mode": "live", "eval.passed": true, "eval.failures": ""}
+  invoke_workflow claims_agent (2927 ms) 
+    invoke_agent claims_agent (2923 ms) 
+      generate_content recording (1662 ms) {"gen_ai.request.model": "recording"}
+      • model.output {"text": "", "calls": "[{\"name\": \"search_policy\", \"args\": {\"query\": \"vacation days per year\"}}]"}
+      execute_tool search_policy (458 ms) {"gen_ai.tool.name": "search_policy"}
+        tool.attempt (456 ms) {"tool.name": "search_policy", "tool.attempt": 1, "tool.fault": "", "tool.args": "{\"query\": \"vacation days per year\"}", "tool.status": "ok", "tool.result": "{\"status\": \"ok\", \"passages\": [{\"id\": \"POL-BOOKING#2\", \"title\": \"Travel Booking Policy \\u2014 When to book\", \"text\": \"Flights should be booked at least 14 days before departure. Later bookings
+      generate_content recording (794 ms) {"gen_ai.request.model": "recording"}
+      • model.output {"text": "NOT_IN_POLICY", "calls": "[]"}
+      • guardrail.output.refusal {}

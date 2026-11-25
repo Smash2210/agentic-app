@@ -28,3 +28,6 @@ jobs:
 
       - name: OpenAPI spec is up to date
         run: uv run python scripts/exports_openapi.py --check
+
+      - name: Agent eval regression gate (replay of recorded model responses, no key)
+        run: uv run python evals/run.py --gate

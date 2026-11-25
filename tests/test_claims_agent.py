@@ -2,62 +2,20 @@
 The model is a scripted fake BaseLlm; tools run for real on a seeded temp DB (FR-401..FR-411)."""
 
 import asyncio
-import json
-from collections.abc import AsyncGenerator
-from pathlib import Path
 
 import pytest
-from google.adk.models import BaseLlm, LlmRequest, LlmResponse
-from google.genai import errors, types
+from google.adk.models import LlmRequest
+from google.genai import errors
 
+from agent_helpers import FakeLlm, call, say, tool_results
+from agentic_app import guardrails
 from agentic_app.agents import claims_agent as ca
-from agentic_app.claims import seed
-from agentic_app.tools import claims_tools, resilience
+from agentic_app.tools import claims_tools
 from agentic_app.tools.resilience import resilient
-
-REPO = Path(__file__).resolve().parents[1]
-VECTORS = {k: v["vector"] for k, v in
-           json.loads((REPO / "data/index/embeddings.json").read_text())["passages"].items()}
 TASK = "Check claim 3 for employee E-002: which rules were broken and what will be reimbursed?"
 
 
-def call(name, **args):
-    return LlmResponse(content=types.Content(role="model", parts=[
-        types.Part(function_call=types.FunctionCall(name=name, args=args))]))
-
-
-def say(text):
-    return LlmResponse(content=types.Content(role="model", parts=[types.Part(text=text)]))
-
-
-class FakeLlm(BaseLlm):
-    """Plays back a script; each step is an LlmResponse or a function of the request."""
-
-    model: str = "fake"
-    script: list = []
-    requests: list = []
-
-    async def generate_content_async(self, llm_request: LlmRequest, stream: bool = False
-                                     ) -> AsyncGenerator[LlmResponse, None]:
-        self.requests.append(llm_request)
-        step = self.script[min(len(self.requests), len(self.script)) - 1]
-        yield step(llm_request) if callable(step) else step
-
-
-def tool_results(request: LlmRequest) -> list[dict]:
-    return [p.function_response.response for c in request.contents for p in c.parts or []
-            if p.function_response]
-
-
-@pytest.fixture(autouse=True)
-def env(tmp_path, monkeypatch):
-    db = tmp_path / "claims.db"
-    assert seed.main(["--db", str(db)]) == 0
-    monkeypatch.setenv("CLAIMS_DB_PATH", str(db))
-    monkeypatch.setattr(claims_tools, "embed", lambda texts, task: [VECTORS["POL-MEALS#1"]] * len(texts))
-    monkeypatch.setattr(resilience, "BACKOFF_S", 0)
-    monkeypatch.delenv("TOOL_FAULT", raising=False)
-    monkeypatch.delenv("AGENT_MAX_STEPS", raising=False)
+pytestmark = pytest.mark.usefixtures("agent_env")
 
 
 def run(script, text=TASK):
@@ -153,21 +111,21 @@ def test_claim_task_is_offered_every_tool_and_asked_for_a_plan():
 
 
 def test_review_flags_missing_citation_and_invented_amounts():
-    tools = '{"total_reimbursable_usd": "642.90", "citation": {"doc_id": "POL-MEALS"}}'
-    assert ca.review(GOOD_ANSWER, tools + ' "6.00"') == []
-    problems = ca.review("You get 700.00 USD.", tools)
+    tools = '{"total_reimbursable_usd": "642.90", "citation": {"doc_id": "POL-MEALS"}, "id": "POL-MEALS#1"}'
+    assert guardrails.grounding_problems(GOOD_ANSWER, tools + ' "6.00"') == []
+    problems = guardrails.grounding_problems("You get 700.00 USD.", tools)
     assert len(problems) == 2 and "POL-MEALS" in problems[0] and "700.00" in problems[1]
-    assert ca.review("No policy was available.", "") == []  # nothing to cite, no amounts
+    assert guardrails.grounding_problems("No policy was available.", "") == []  # nothing to cite, no amounts
 
 
 def test_reflection_sends_problems_back_and_the_model_revises_once():
-    revised = say(GOOD_ANSWER)
+    revised = say(GOOD_ANSWER.replace("[POL-MEALS#1]", "(POL-MEALS §1)"))  # no search_policy run
     final, fake, _ = run([call("check_claim", claim_id=3),
                           say("You will get 700.00 USD."),  # invented amount, no citation
                           revised])
     review = tool_results(fake.requests[-1])[-1]
     assert review["status"] == "revise" and any("700.00" in p for p in review["problems"])
-    assert final == GOOD_ANSWER
+    assert final == revised.content.parts[0].text
 
 
 def test_second_failed_draft_is_returned_with_a_note():
@@ -219,3 +177,22 @@ def test_default_model_reads_env(monkeypatch):
 
 def _text(responses):
     return "".join(p.text or "" for r in responses for p in r.content.parts)
+
+
+def test_hung_model_call_times_out_and_falls_back(monkeypatch):
+    calls = []
+
+    async def parent(self, llm_request, stream=False):
+        calls.append(llm_request.model)
+        if llm_request.model == "primary":
+            await asyncio.sleep(5)  # hangs past the limit
+        yield say("ok")
+
+    monkeypatch.setattr(ca.Gemini, "generate_content_async", parent)
+    monkeypatch.setenv("MODEL_TIMEOUT_S", "0.05")
+    model = ca.FallbackGemini(model="primary", fallbacks=["backup"])
+
+    async def collect():
+        return [r async for r in model.generate_content_async(LlmRequest(model="primary"))]
+
+    assert _text(asyncio.run(collect())) == "ok" and calls == ["primary", "backup"]

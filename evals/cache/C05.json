@@ -1,0 +1,84 @@
+{
+ "case": "C05",
+ "model_responses": [
+  {
+   "model_version": "gemini-3.5-flash-lite",
+   "content": {
+    "parts": [
+     {
+      "text": "1. Get claim details using `get_claim`.\n2. Check claim against policy using `check_claim`.\n\n"
+     },
+     {
+      "function_call": {
+       "id": "call_3919177253109366283",
+       "args": {
+        "claim_id": 1
+       },
+       "name": "get_claim"
+      },
+      "thought_signature": "EpYBCpMBAWkUfRNKHZ8xeyKq34rAWpRKikTN9DwWT2GqhrgrzcnvMWImMfgl1V-tH4_gNX9x1hvn94aNpQCWihFUsHAERkzNO_3UDWGnKJUOsWr2IrPtF07I1yz9lcbNp6EOM5pmj5-eSFIJc1vZP3nvlQSYuKUpUpzGrz2SdRFpkQW9yjRFVi7Fr70DLN7UAtNHn8TdtzI7"
+     },
+     {
+      "function_call": {
+       "id": "call_3919177253109364994",
+       "args": {
+        "claim_id": 1
+       },
+       "name": "check_claim"
+      }
+     }
+    ],
+    "role": "model"
+   },
+   "finish_reason": "STOP",
+   "usage_metadata": {
+    "candidates_token_count": 57,
+    "prompt_token_count": 744,
+    "prompt_tokens_details": [
+     {
+      "modality": "TEXT",
+      "token_count": 744
+     }
+    ],
+    "total_token_count": 801
+   }
+  },
+  {
+   "model_version": "gemini-3.5-flash-lite",
+   "content": {
+    "parts": [
+     {
+      "text": "Claim 1 is fully within policy and has no violations. \n\n- **Violations:** None\n- **Total Reimbursable:** $580.00 (which includes $430.00 for the submitted expense lines and $150.00 for per diem covering"
+     },
+     {
+      "text": " Berlin for 3 days at $60.00/day, per [POL-PERDIEM §1, §2]).",
+      "thought_signature": "EpYBCpMBAWkUfRMRt4Cq13Css2BNYAQmX8V-08aKy0AwU-Jaco2dR18Kl4GQfshrakBKM5avxI9htNsrSkb2F4ydtSH1zgVTS0XgR94JL6V8iwFrfOoluKW1cOr7x3rsnbQAIYI81sHrYsP6tK_eMnGp5SB7awpDY5a2byHC6VHPqqRt2_ov4vxvbc3fGbV5TkYEjGAJunQN"
+     }
+    ],
+    "role": "model"
+   },
+   "finish_reason": "STOP",
+   "usage_metadata": {
+    "candidates_token_count": 91,
+    "prompt_token_count": 1471,
+    "prompt_tokens_details": [
+     {
+      "modality": "TEXT",
+      "token_count": 1471
+     }
+    ],
+    "total_token_count": 1562
+   }
+  }
+ ],
+ "embeddings": {},
+ "judge": {
+  "answer_sha": "5ad22150c6484e06",
+  "verdict": {
+   "score": 5,
+   "supported": true,
+   "reason": "The answer accurately states that Claim 1 is within policy with no violations, correctly calculates the total reimbursable amount of $580.00 (including per diem), and cites the policy appropriately.",
+   "model": "gemini-3.5-flash"
+  }
+ }
+}

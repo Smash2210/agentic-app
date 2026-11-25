@@ -1,10 +1,12 @@
 """The claims agent (spec 004): ADK `root_agent` with resilient tools and three light patterns.
 
     user request
-      └─ before_model  ROUTER (code): names a claim number? claim task : policy question
+      └─ before_model  INPUT GUARD (spec 005): injection / off-topic -> fixed message, no model call
+      │                ROUTER (code): names a claim number? claim task : policy question
       │                (a policy question is offered only search_policy)
       │                ITERATION GUARD: more than AGENT_MAX_STEPS model calls -> fixed stop message
       ├─ model         claim task: writes a numbered PLAN first, then calls tools
+      ├─ before_tool   ACTION GUARD (spec 005): only read-only tools; nothing can approve a claim
       ├─ tools         search_policy / get_claim / check_claim: timeout, 1 retry, typed error result
       ├─ after_tool    records tool output for the reflection check
       └─ after_model   REFLECTION (code): final answer must cite a policy doc a tool returned and use
@@ -28,7 +30,9 @@ from google.adk.models import Gemini, LlmRequest, LlmResponse
 from google.adk.runners import InMemoryRunner
 from google.genai import errors, types
 
+from agentic_app import guardrails
 from agentic_app.llm import TRANSIENT_CODES  # also loads .env, like the rest of the app
+from agentic_app.tracing import event as trace_event
 from agentic_app.tools.claims_tools import check_claim, get_claim, search_policy
 
 log = logging.getLogger(__name__)
@@ -36,6 +40,14 @@ log = logging.getLogger(__name__)
 APP_NAME = "claims_agent"
 DEFAULT_MAX_STEPS = 8
 STATE = "temp:claims_agent"  # per-invocation bookkeeping (route, steps, tool output, revised)
+
+NOT_IN_POLICY = "NOT_IN_POLICY"
+# The same code-written refusal as POST /ask (spec 003 FR-304); never the model's own wording.
+REFUSAL = ("I can't answer that from the travel and expense policy. "
+           "Please ask your manager or the finance team.")
+# Gemini 3 requires a thought signature on every function call in the history; a call the system
+# injects itself (review_answer) has none, so it carries Gemini's documented placeholder.
+INJECTED_CALL_SIGNATURE = b"skip_thought_signature_validator"
 
 STOP_MESSAGE = ("I stopped after {n} steps without finishing (the step limit for one request). "
                 "Nothing was changed. Please ask about fewer claims at a time, or try again.")
@@ -45,7 +57,8 @@ INSTRUCTION = """You are the expense and travel policy copilot for employees.
 Route: {route}
 
 For a policy question: call search_policy, then answer in 1-4 sentences using only the passages,
-citing passage IDs in brackets, e.g. [POL-MEALS#1].
+citing passage IDs in brackets, e.g. [POL-MEALS#1]. If the passages do not answer the question,
+reply with exactly NOT_IN_POLICY and nothing else.
 
 For a claim task:
 1. First write a short numbered plan (one line per step: which tool, for which claim).
@@ -62,8 +75,10 @@ Rules:
 - If review_answer returns problems, rewrite your answer once to fix them."""
 
 _CLAIM_NUMBER = re.compile(r"\bclaims?\s*(?:#|no\.?|number)?\s*\d+", re.IGNORECASE)
-_DOC_ID = re.compile(r"POL-[A-Z]+")
-_AMOUNT = re.compile(r"\d[\d,]*\.\d{2}")
+
+
+def model_timeout_s() -> float:
+    return float(os.getenv("MODEL_TIMEOUT_S", "60"))
 
 
 def max_steps() -> int:
@@ -73,24 +88,6 @@ def max_steps() -> int:
 def route_of(text: str) -> str:
     """FR-407: a request naming a claim number is a claim task; anything else a policy question."""
     return "claim_task" if _CLAIM_NUMBER.search(text) else "policy_question"
-
-
-def _amounts(text: str) -> set[str]:
-    return {a.replace(",", "") for a in _AMOUNT.findall(text)}
-
-
-def review(answer: str, tool_output: str) -> list[str]:
-    """FR-409: the deterministic reflection check. Returns the problems found (empty if none)."""
-    problems = []
-    known_docs = set(_DOC_ID.findall(tool_output))
-    if known_docs and not set(_DOC_ID.findall(answer)) & known_docs:
-        problems.append("The answer cites no policy reference returned by the tools; cite one of: "
-                        + ", ".join(sorted(known_docs)) + ".")
-    invented = sorted(_amounts(answer) - _amounts(tool_output))
-    if invented:
-        problems.append("These amounts do not appear in any tool result (do not compute amounts): "
-                        + ", ".join(invented) + ".")
-    return problems
 
 
 def review_answer(problems: list[str]) -> dict:
@@ -112,7 +109,7 @@ def _run_state(ctx: CallbackContext) -> dict:
     if not state or state.get("invocation") != ctx.invocation_id:
         text = "".join(p.text or "" for p in (ctx.user_content.parts if ctx.user_content else []))
         state = {"invocation": ctx.invocation_id, "route": route_of(text), "steps": 0,
-                 "tool_output": "", "revised": False}
+                 "tool_output": "", "revised": False, "fixed_reply": False}
     return state
 
 
@@ -130,8 +127,22 @@ def before_model(callback_context: CallbackContext, llm_request: LlmRequest) -> 
     state = _run_state(callback_context)
     state["steps"] += 1
     callback_context.state[STATE] = state
+    if state["steps"] == 1:  # spec 005 FR-506: the request is screened before any model call
+        text = "".join(p.text or "" for p in (callback_context.user_content.parts
+                                               if callback_context.user_content else []))
+        blocked = guardrails.screen_input(text)
+        if blocked:
+            reason, message = blocked
+            log.warning("input guard: blocked (%s)", reason)
+            trace_event("guardrail.input.blocked", reason=reason)
+            state["fixed_reply"] = True
+            callback_context.state[STATE] = state
+            return LlmResponse(content=types.Content(role="model", parts=[types.Part(text=message)]))
     if state["steps"] > max_steps():  # FR-406: stop the loop instead of calling the model again
         log.warning("iteration guard: stopping after %d model calls", max_steps())
+        trace_event("guardrail.iteration.stopped", max_steps=max_steps())
+        state["fixed_reply"] = True
+        callback_context.state[STATE] = state
         return LlmResponse(content=types.Content(role="model", parts=[
             types.Part(text=STOP_MESSAGE.format(n=max_steps()))]))
     if state["route"] == "policy_question":  # FR-407: only the policy tool is offered
@@ -152,22 +163,33 @@ def after_tool(tool, args: dict, tool_context, tool_response: dict) -> dict | No
 
 
 def after_model(callback_context: CallbackContext, llm_response: LlmResponse) -> LlmResponse | None:
+    parts = llm_response.content.parts if llm_response.content and llm_response.content.parts else []
+    trace_event("model.output", text=_text(llm_response)[:4000], calls=json.dumps(
+        [{"name": p.function_call.name, "args": p.function_call.args} for p in parts if p.function_call]))
     if llm_response.partial or _has_call(llm_response):
         return None
     answer = _text(llm_response)
     state = _run_state(callback_context)
-    if not answer or answer.startswith(STOP_MESSAGE[:20]):
+    if not answer or state["fixed_reply"]:
         return None
-    problems = review(answer, state["tool_output"])
+    if answer.strip().startswith(NOT_IN_POLICY):  # spec 005: a refusal needs no citation
+        trace_event("guardrail.output.refusal")
+        state["fixed_reply"] = True
+        callback_context.state[STATE] = state
+        return LlmResponse(content=types.Content(role="model", parts=[types.Part(text=REFUSAL)]))
+    problems = guardrails.grounding_problems(answer, state["tool_output"])
     if not problems:
         return None
     if not state["revised"]:  # FR-409: send the problems back; the model answers once more
         state["revised"] = True
         callback_context.state[STATE] = state
         log.info("reflection: draft failed review: %s", problems)
+        trace_event("guardrail.output.revise", problems=" | ".join(problems))
         return LlmResponse(content=types.Content(role="model", parts=[types.Part(
             function_call=types.FunctionCall(id=f"review-{uuid.uuid4().hex[:8]}",
-                                             name="review_answer", args={"problems": problems}))]))
+                                             name="review_answer", args={"problems": problems}),
+            thought_signature=INJECTED_CALL_SIGNATURE)]))
+    trace_event("guardrail.output.unresolved", problems=" | ".join(problems))
     note = "\n\nNote: automatic review still found problems: " + " ".join(problems)
     return LlmResponse(content=types.Content(role="model", parts=[types.Part(text=answer + note)]))
 
@@ -186,13 +208,20 @@ class FallbackGemini(Gemini):
         for i, name in enumerate(names):
             llm_request.model = name
             try:
-                async for response in super().generate_content_async(llm_request, stream):
-                    yield response
-                return
-            except errors.APIError as exc:
-                if exc.code not in TRANSIENT_CODES or i == len(names) - 1:
+                # Hard limit per model (ADK's client has no request timeout; a hung call once
+                # stalled a live eval run for 20 minutes). Responses are collected inside the limit.
+                async with asyncio.timeout(model_timeout_s()):
+                    responses = [r async for r in Gemini.generate_content_async(self, llm_request, stream)]
+            except (errors.APIError, TimeoutError) as exc:
+                transient = isinstance(exc, TimeoutError) or exc.code in TRANSIENT_CODES
+                if not transient or i == len(names) - 1:
                     raise
-                log.warning("model %s unavailable (HTTP %s); trying %s", name, exc.code, names[i + 1])
+                reason = "timeout" if isinstance(exc, TimeoutError) else f"HTTP {exc.code}"
+                log.warning("model %s unavailable (%s); trying %s", name, reason, names[i + 1])
+                continue
+            for response in responses:
+                yield response
+            return
 
 
 def default_model() -> FallbackGemini:
@@ -219,6 +248,7 @@ def build_agent(model=None) -> Agent:
         tools=[search_policy, get_claim, check_claim, review_answer],
         before_model_callback=before_model,
         after_model_callback=after_model,
+        before_tool_callback=guardrails.before_tool,
         after_tool_callback=after_tool,
     )
 

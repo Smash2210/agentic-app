@@ -1,0 +1,120 @@
+{
+ "case": "M03",
+ "model_responses": [
+  {
+   "model_version": "gemini-3.5-flash-lite",
+   "content": {
+    "parts": [
+     {
+      "text": "1. Call `get_claim` for claims 2, 9, and 12.\n2. Call `check_"
+     },
+     {
+      "text": "claim` for claims 2, 9, and 12.\n\n"
+     },
+     {
+      "function_call": {
+       "id": "call_16759832319871117368",
+       "args": {
+        "claim_id": 2
+       },
+       "name": "get_claim"
+      },
+      "thought_signature": "EpYBCpMBAWkUfRPM7twLIXokvadiMZNNitWzeMdqk-LNYoKJtee44mxrBQhDgtjjqtF_NhndKPvIzTre6yOakKHR9B3NYvQD_1F1MBlc7u9IO8ZUPKl6RYbKi0JbYxAkJi8QID8IEyxuRRgdZJQzsLlK75yNfHHmEvuiOKnWTavK-QV2BqThkYfcfopPnlsJpk25fwy3Y3Yc"
+     },
+     {
+      "function_call": {
+       "id": "call_16759832319871117785",
+       "args": {
+        "claim_id": 9
+       },
+       "name": "get_claim"
+      }
+     },
+     {
+      "function_call": {
+       "id": "call_16759832319871118202",
+       "args": {
+        "claim_id": 12
+       },
+       "name": "get_claim"
+      }
+     },
+     {
+      "function_call": {
+       "id": "call_16759832319871118619",
+       "args": {
+        "claim_id": 2
+       },
+       "name": "check_claim"
+      }
+     },
+     {
+      "function_call": {
+       "id": "call_16759832319871119036",
+       "args": {
+        "claim_id": 9
+       },
+       "name": "check_claim"
+      }
+     },
+     {
+      "function_call": {
+       "id": "call_16759832319871115357",
+       "args": {
+        "claim_id": 12
+       },
+       "name": "check_claim"
+      }
+     }
+    ],
+    "role": "model"
+   },
+   "finish_reason": "STOP",
+   "usage_metadata": {
+    "candidates_token_count": 142,
+    "prompt_token_count": 751,
+    "prompt_tokens_details": [
+     {
+      "modality": "TEXT",
+      "token_count": 751
+     }
+    ],
+    "total_token_count": 893
+   }
+  },
+  {
+   "model_version": "gemini-3.5-flash-lite",
+   "content": {
+    "parts": [
+     {
+      "text": "### Claim 2\n* **Violations:** None\n* **Total Reimbursable:** $100.76\n* **Policy:** Per diem applied according to [POL-PERDIEM § 1, 3].\n\n### Claim 9\n* **Violations:** None\n* **Total Reimbursable:** $123.66\n* **Policy:** Per diem applied according to [POL-PERDIEM § 1, 2].\n\n### Claim 12\n* **Violations:** None\n* **Total Reimbursable:** $327.50\n* **Policy:** Per diem applied according to [POL-PERDIEM § 1, 2].",
+      "thought_signature": "EpYBCpMBAWkUfROCwUITMqc-sKEIDtrCQkPmYeNRPsR9eWyrTUDfYxw-lnv6uVxhmqu4f-pJRd33KOk-WbCQqDEKMdFCB_zMCCs6aVK64eO9nrsmZ5Tx-NBJLTGUnpt9aFJXX2Nk80vhR14YQUc-15_4ktlAabnOxnM3FUeCEMJ-4KKEcN08k9LkXI1p-MekAL69uo_8GVfV"
+     }
+    ],
+    "role": "model"
+   },
+   "finish_reason": "STOP",
+   "usage_metadata": {
+    "candidates_token_count": 153,
+    "prompt_token_count": 2314,
+    "prompt_tokens_details": [
+     {
+      "modality": "TEXT",
+      "token_count": 2314
+     }
+    ],
+    "total_token_count": 2467
+   }
+  }
+ ],
+ "embeddings": {},
+ "judge": {
+  "answer_sha": "d43a059180bb46aa",
+  "verdict": {
+   "score": 5,
+   "supported": true,
+   "reason": "The assistant provides the exact reimbursable totals and citations supported by the tool outputs for claims 2, 9, and 12.",
+   "model": "gemini-3.5-flash-lite"
+  }
+ }
+}

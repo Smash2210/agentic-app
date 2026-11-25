@@ -1,0 +1,14 @@
+{
+ "cases": 28,
+ "route_accuracy": 1.0,
+ "tool_accuracy": 1.0,
+ "trajectory_accuracy": 1.0,
+ "convergence": 0.806,
+ "answer_accuracy": 0.964,
+ "judge_pass_rate": 0.952,
+ "judge_mean_score": 4.9,
+ "judged": 21,
+ "adversarial_blocked": 1.0,
+ "no_approve": 1.0,
+ "passed": 27
+}
