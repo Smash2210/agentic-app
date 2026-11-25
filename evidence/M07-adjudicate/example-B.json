@@ -6,7 +6,7 @@
       "line_no": 1,
       "date": "2026-04-20",
       "category": "transport",
-      "merchant": "ADDISON LEE",
+      "merchant": "Addison Lee",
       "amount": "48.00",
       "currency": "GBP",
       "receipt_attached": true,
@@ -16,7 +16,7 @@
       "line_no": 2,
       "date": "2026-04-21",
       "category": "transport",
-      "merchant": "ADDISON LEE",
+      "merchant": "Addison Lee",
       "amount": "51.50",
       "currency": "GBP",
       "receipt_attached": true,
@@ -26,7 +26,7 @@
       "line_no": 3,
       "date": "2026-04-20",
       "category": "meal",
-      "merchant": "DISHOOM KINGS CROSS",
+      "merchant": "Dishoom Kings Cross",
       "amount": "70.00",
       "currency": "GBP",
       "receipt_attached": true,
@@ -94,14 +94,14 @@
   },
   "flags": [],
   "unreadable": [],
-  "explanation": "Your transport expenses of 48.00 GBP (60.96 USD) and 51.50 GBP (65.41 USD) with Addison Lee were fully approved. The meal expense of 70.00 GBP (88.90 USD) at Dishoom Kings Cross on 2026-04-20 exceeded the daily meal limit of 75.00 USD under POL-MEALS §1. Therefore, 13.90 USD was rejected for that meal under POL-MEALS §3. You also receive a per diem allowance of 105.00 USD for your trip to London under POL-PERDIEM §1 and POL-PERDIEM §2. In total, your reimbursable amount is 306.37 USD.",
+  "explanation": "Your claim for your trip to London from 2026-04-20 to 2026-04-21 has been checked and accepted with minor adjustments. The transport journeys on Receipt 1 are fully reimbursable under the company travel policy. Your meal expense on Receipt 2 on 2026-04-20 of 70.00 GBP converted to 88.90 USD, which exceeded the daily meal limit of 75.00 USD under POL-MEALS §1 and §3, resulting in a rejection of 13.90 USD for that day. Finally, you are entitled to a daily incidentals per diem of 105.00 USD for your two-day trip to London under POL-PERDIEM §1 and §2.",
   "usage": {
-    "model": "gemini-3.5-flash-lite, gemini-3.5-flash",
+    "model": "gemini-3.5-flash-lite",
     "model_calls": 3,
-    "prompt_tokens": 8292,
+    "prompt_tokens": 8396,
     "cached_tokens": 0,
-    "thoughts_tokens": 1909,
-    "output_tokens": 586,
-    "latency_ms": 67476
+    "thoughts_tokens": 1476,
+    "output_tokens": 541,
+    "latency_ms": 17208
   }
 }

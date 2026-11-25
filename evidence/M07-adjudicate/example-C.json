@@ -6,7 +6,7 @@
       "line_no": 1,
       "date": "2026-04-20",
       "category": "transport",
-      "merchant": "Addison Lee",
+      "merchant": "ADDISON LEE",
       "amount": "48.00",
       "currency": "GBP",
       "receipt_attached": true,
@@ -16,7 +16,7 @@
       "line_no": 2,
       "date": "2026-04-21",
       "category": "transport",
-      "merchant": "Addison Lee",
+      "merchant": "ADDISON LEE",
       "amount": "51.50",
       "currency": "GBP",
       "receipt_attached": true,
@@ -60,14 +60,14 @@
   },
   "flags": [],
   "unreadable": [],
-  "explanation": "Your claim for the business trip to London from 2026-04-20 to 2026-04-21 has been processed. The Addison Lee transport expenses of 48.00 GBP and 51.50 GBP were converted to 60.96 USD and 65.41 USD respectively per POL-CURRENCY §2 and are fully reimbursable. Under POL-PERDIEM §1 and POL-PERDIEM §2, you receive a per diem allowance of 105.00 USD for the 2 travel days in London at the daily rate of 70.00 USD. The total reimbursable amount for your claim is 231.37 USD.",
+  "explanation": "Your claim has been reviewed successfully. Both transport journeys from your trip to London have been fully approved and converted from GBP to USD in accordance with POL-CURRENCY. Additionally, your per diem for incidentals has been calculated correctly for your two-day trip under POL-PERDIEM §1 and §2. No policy violations or missing receipts were found for the submitted items.",
   "usage": {
-    "model": "gemini-3.5-flash",
+    "model": "gemini-3.5-flash-lite",
     "model_calls": 3,
-    "prompt_tokens": 7000,
+    "prompt_tokens": 7150,
     "cached_tokens": 0,
-    "thoughts_tokens": 755,
-    "output_tokens": 459,
-    "latency_ms": 42081
+    "thoughts_tokens": 749,
+    "output_tokens": 348,
+    "latency_ms": 27873
   }
 }

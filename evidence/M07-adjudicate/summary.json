@@ -1,0 +1,26 @@
+[
+  {
+    "example": "A",
+    "expected": "needs_human_review",
+    "decision": "needs_human_review",
+    "total_usd": "772.68"
+  },
+  {
+    "example": "B",
+    "expected": "partial",
+    "decision": "partial",
+    "total_usd": "306.37"
+  },
+  {
+    "example": "C",
+    "expected": "approve",
+    "decision": "approve",
+    "total_usd": "231.37"
+  },
+  {
+    "example": "D",
+    "expected": "needs_human_review",
+    "decision": "needs_human_review",
+    "total_usd": null
+  }
+]

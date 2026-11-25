@@ -19,7 +19,7 @@
       "line_no": 2,
       "date": "2026-03-11",
       "category": "meal",
-      "merchant": "LE PETIT BISTRO - Berlin Mitte",
+      "merchant": "LE PETIT BISTRO",
       "amount": "48.50",
       "currency": "EUR",
       "receipt_attached": true,
@@ -65,25 +65,25 @@
     {
       "receipt": 1,
       "item": "Minibar 14.00 EUR",
-      "reason": "Minibar is not reimbursable lodging.",
+      "reason": "Minibar is not covered under lodging expenses.",
       "citation": "POL-LODGING §4"
     },
     {
       "receipt": 2,
       "item": "Bottle Riesling 29.00 EUR",
-      "reason": "Alcohol is not reimbursable under meals.",
+      "reason": "Alcohol is not reimbursable unless part of approved client entertainment.",
       "citation": "POL-MEALS §2"
     }
   ],
   "unreadable": [],
-  "explanation": "Your claim has been checked successfully in accordance with company policy. The lodging expense from HOTEL SPREE BERLIN and the meal expense from LE PETIT BISTRO are within their respective nightly caps and daily limits after conversion to USD under POL-CURRENCY. The minibar charge from your hotel and the alcohol from your dinner were excluded prior to submission pursuant to POL-LODGING §4 and POL-MEALS §2. Additionally, you have been awarded per diem for your travel days in Berlin under POL-PERDIEM §1 and §2.",
+  "explanation": "Your claim has been successfully processed in accordance with company policy. Lodging at Hotel Spree Berlin and the meal at Le Petit Bistro were converted to USD using fixed exchange rates under POL-CURRENCY §2. The minibar and alcoholic beverages were excluded from the lines as required by POL-LODGING §4 and POL-MEALS §2 respectively. Additionally, incidentals per diem under POL-PERDIEM §1 and §2 was included for your four-day stay in Berlin.",
   "usage": {
     "model": "gemini-3.5-flash-lite",
-    "model_calls": 4,
-    "prompt_tokens": 13148,
+    "model_calls": 3,
+    "prompt_tokens": 9392,
     "cached_tokens": 0,
-    "thoughts_tokens": 1829,
-    "output_tokens": 746,
-    "latency_ms": 112741
+    "thoughts_tokens": 1800,
+    "output_tokens": 641,
+    "latency_ms": 10241
   }
 }
