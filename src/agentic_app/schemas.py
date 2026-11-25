@@ -403,3 +403,14 @@ class Adjudication(BaseModel):
         "Short explanation for the employee, citing policy sections."
     ))]
     usage: Annotated[ModelUsage, Field(description="Model usage for this request.")]
+
+
+# --- policy Q&A (spec 003) ----------------------------------------------------------------------
+
+MAX_QUESTION = 500
+
+
+class AskRequest(BaseModel):
+    question: Annotated[NonBlankStr, Field(max_length=MAX_QUESTION, description=(
+        "A question about the travel and expense policy, in your own words (at most 500 characters)."
+    ))]

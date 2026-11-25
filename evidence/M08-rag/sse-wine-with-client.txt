@@ -1,0 +1,23 @@
+POST /ask {"question": "Is wine at a dinner with a client reimbursable?"}
+
+event: token
+data: "Alcohol is reimburs"
+
+event: token
+data: "able only as part of approved client entertainment, and only in moderation [POL-ENTERTAIN#3, POL-ME"
+
+event: token
+data: "ALS#2]. Client entertainment must be approved by the employee's manager before it takes place [POL-ENTERTAIN"
+
+event: token
+data: "#1]."
+
+event: token
+data: ""
+
+event: citations
+data: {"citations": [{"id": "POL-ENTERTAIN#3", "document": "Client Entertainment Policy", "section": "Alcohol", "similarity": 0.822}, {"id": "POL-MEALS#2", "document": "Meals Policy", "section": "What is not covered", "similarity": 0.831}, {"id": "POL-ENTERTAIN#1", "document": "Client Entertainment Policy", "section": "Approval", "similarity": 0.714}], "unverified": [], "grounded": true, "refused": false, "question_similarity": 0.835, "model": "gemini-3.5-flash-lite"}
+
+event: done
+data: {}
+
